@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+
+members = [
+  "app/roster",
+]
+
+[workspace.package]
+authors = ["Anthony Griffon <anthony@griffon.one>"]
+edition = "2021"
+repository = "https://github.com/miaxos/roster/"
+
+[workspace.dependencies]
+anyhow = "1"
+insta = { version = "1", features = ["yaml"] }
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+debug = false
+panic = "abort"
+lto = "thin"
+codegen-units = 1
