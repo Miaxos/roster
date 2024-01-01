@@ -12,7 +12,10 @@ repository = "https://github.com/miaxos/roster/"
 
 [workspace.dependencies]
 anyhow = "1"
+config = "0.13"
+monoio = "0.2"
 insta = { version = "1", features = ["yaml"] }
+serde = "1"
 
 [profile.dev]
 panic = "abort"

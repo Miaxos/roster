@@ -19,6 +19,9 @@ default = []
 
 [dependencies]
 anyhow.workspace = true
+config.workspace = true
+monoio.workspace = true
+serde.workspace = true
 
 [dev-dependencies]
 insta.workspace = true
