@@ -23,5 +23,9 @@ config.workspace = true
 monoio.workspace = true
 serde.workspace = true
 
+# Logging
+tracing = { workspace = true, features = ["attributes"] }
+tracing-subscriber = { workspace = true, features = ["registry", "env-filter", "json"] }
+
 [dev-dependencies]
 insta.workspace = true
