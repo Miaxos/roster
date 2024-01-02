@@ -20,6 +20,8 @@ default = []
 [dependencies]
 anyhow.workspace = true
 config.workspace = true
+derive_builder.workspace = true
+dotenv.workspace = true
 monoio.workspace = true
 serde.workspace = true
 
