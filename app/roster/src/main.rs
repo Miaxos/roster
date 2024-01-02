@@ -30,6 +30,5 @@ fn main() -> anyhow::Result<()> {
 
     server.run();
 
-    info!("hello world");
     Ok(())
 }
