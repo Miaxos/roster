@@ -6,10 +6,16 @@ use std::time::Duration;
 use derive_builder::Builder;
 use monoio::io::AsyncReadRent;
 use monoio::net::TcpListener;
-use tracing::info;
+use tracing::{error, info};
 
 mod connection;
+mod frame;
 mod handle;
+use handle::Handler;
+
+mod cmd;
+
+use crate::application::server::connection::Connection;
 
 #[derive(Debug, Builder)]
 #[builder(pattern = "owned", setter(into, strip_option))]
@@ -32,7 +38,7 @@ impl Server {
 
             loop {
                 // We accept the TCP Connection
-                let (mut conn, _addr) = listener
+                let (conn, _addr) = listener
                     .accept()
                     .await
                     .expect("Unable to accept connections");
@@ -44,16 +50,15 @@ impl Server {
                         "[Server] Accepted a new connection, will read form it"
                     );
 
-                    let buf = vec![0; 64];
-                    let (r, buf) = conn.read(buf).await;
+                    let mut handler = Handler {
+                        connection: Connection::new(conn, 4 * 1024),
+                    };
 
-                    let read_len = r.unwrap();
-                    monoio::time::sleep(Duration::from_secs(5)).await;
-                    info!(
-                        "[Server] Read {} bytes data: {:?}",
-                        read_len,
-                        &buf[..read_len]
-                    );
+                    if let Err(err) = handler.run().await {
+                        error!(?err);
+                    }
+
+                    // monoio::time::sleep(Duration::from_secs(5)).await;
                 });
             }
         })

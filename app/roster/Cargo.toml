@@ -9,6 +9,10 @@ repository = "https://github.com/miaxos/roster"
 license = "MIT"
 keywords = ["redis", "async", "io-uring"]
 
+[lib]
+name = "roster"
+path = "./src/lib.rs"
+
 [[bin]]
 name = "roster"
 path = "./src/main.rs"
@@ -19,11 +23,14 @@ default = []
 
 [dependencies]
 anyhow.workspace = true
+atoi = "2"
+bytes.workspace = true
 config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true
-monoio.workspace = true
+monoio = { workspace = true, features = ["bytes"] }
 serde.workspace = true
+thiserror = "1"
 
 # Logging
 tracing = { workspace = true, features = ["attributes"] }
@@ -31,3 +38,13 @@ tracing-subscriber = { workspace = true, features = ["registry", "env-filter", "
 
 [dev-dependencies]
 insta.workspace = true
+rand = "0.8"
+redis = "0.24"
+tokio = { version = "1.4", features = [
+  "macros",
+  "rt-multi-thread",
+  "sync",
+  "time",
+  "io-util",
+  "net",
+] }
