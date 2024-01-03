@@ -1,7 +1,4 @@
 mod utils;
-
-use bytes::Bytes;
-use redis_async::resp::RespValue;
 use redis_async::resp_array;
 
 #[tokio::test]
