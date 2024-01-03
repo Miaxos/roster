@@ -3,7 +3,7 @@ use redis_async::resp_array;
 
 #[tokio::test]
 pub async fn test_start_simple_server_ping() {
-    let addr = utils::debug_server();
+    let addr = utils::start_simple_server();
 
     let connection = utils::connect_without_auth(addr).await;
 
@@ -14,7 +14,7 @@ pub async fn test_start_simple_server_ping() {
 
 #[tokio::test]
 pub async fn test_start_simple_server_ping_msg() {
-    let addr = utils::debug_server();
+    let addr = utils::start_simple_server();
 
     let connection = utils::connect_without_auth(addr).await;
 

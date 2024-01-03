@@ -2,6 +2,7 @@ use bytes::Bytes;
 use tracing::info;
 
 use super::parse::{Parse, ParseError};
+use super::CommandExecution;
 use crate::application::server::connection::Connection;
 use crate::application::server::frame::Frame;
 
@@ -49,15 +50,10 @@ impl Ping {
             Err(e) => Err(e.into()),
         }
     }
+}
 
-    /// Apply the `Ping` command and return the message.
-    ///
-    /// The response is written to `dst`. This is called by the server in order
-    /// to execute a received command.
-    pub(crate) async fn apply(
-        self,
-        dst: &mut Connection,
-    ) -> anyhow::Result<()> {
+impl CommandExecution for Ping {
+    async fn apply(self, dst: &mut Connection) -> anyhow::Result<()> {
         let response = match self.msg {
             None => Frame::Simple("PONG".to_string()),
             Some(msg) => Frame::Bulk(msg),

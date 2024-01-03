@@ -1,7 +1,7 @@
 use std::io::{self, Cursor};
 
 use bytes::{Buf, BytesMut};
-use monoio::buf::{IoBuf};
+use monoio::buf::IoBuf;
 use monoio::io::{AsyncReadRent, AsyncWriteRent, AsyncWriteRentExt, BufWriter};
 use monoio::net::TcpStream;
 
@@ -54,7 +54,6 @@ impl Connection {
             // Attempt to parse a frame from the buffered data. If enough data
             // has been buffered, the frame is returned.
             if let Some(frame) = self.parse_frame()? {
-                tracing::info!("blbl");
                 return Ok(Some(frame));
             }
 

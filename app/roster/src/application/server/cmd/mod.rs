@@ -1,4 +1,4 @@
-use self::client_set_info::ClientSetInfo;
+use self::client::Client;
 use self::parse::Parse;
 use self::ping::Ping;
 use self::unknown::Unknown;
@@ -7,7 +7,7 @@ use super::frame::Frame;
 
 mod parse;
 
-mod client_set_info;
+mod client;
 mod ping;
 mod unknown;
 
@@ -16,15 +16,29 @@ mod unknown;
 /// Methods called on `Command` are delegated to the command implementation.
 #[derive(Debug)]
 pub enum Command {
-    ClientSetInfo(ClientSetInfo),
+    Client(Client),
     Ping(Ping),
     Unknown(Unknown),
+}
+
+pub trait CommandExecution: Sized {
+    /// Apply a command or a subcommand.
+    async fn apply(self, dst: &mut Connection) -> anyhow::Result<()>;
+}
+
+pub trait SubcommandRegistry {
+    /// Parse a sub-command from an already parsed frame .
+    ///
+    /// # Returns
+    ///
+    /// On success, the command value is returned, otherwise, `Err` is returned.
+    fn from_parse(parse: Parse) -> anyhow::Result<Command>;
 }
 
 impl Command {
     /// Parse a command from a received frame.
     ///
-    /// The `Frame` must represent a Redis command supported by `mini-redis` and
+    /// The `Frame` must represent a Redis command supported by `roster` and
     /// be the array variant.
     ///
     /// # Returns
@@ -48,8 +62,7 @@ impl Command {
         let command = match &command_name[..] {
             "ping" => Command::Ping(Ping::parse_frames(&mut parse)?),
             "client" => {
-                let _ = parse.next_string();
-                Command::ClientSetInfo(ClientSetInfo::parse_frames(&mut parse)?)
+                return Client::from_parse(parse);
             }
             _ => {
                 // The command is not recognized and an Unknown command is
@@ -85,7 +98,7 @@ impl Command {
         match self {
             Ping(cmd) => cmd.apply(dst).await,
             Unknown(cmd) => cmd.apply(dst).await,
-            ClientSetInfo(cmd) => cmd.apply(dst).await,
+            Client(cmd) => cmd.apply(dst).await,
         }
     }
 }

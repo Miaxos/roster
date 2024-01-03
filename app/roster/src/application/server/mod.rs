@@ -42,7 +42,7 @@ impl ServerConfig {
             let handle = std::thread::spawn(move || {
                 info!("[Server] Spawned");
                 monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
-                // Use IoUringDriver
+
                 let mut rt = monoio::RuntimeBuilder::<Driver>::new()
                     .with_entries(32768)
                     .enable_timer()
@@ -78,9 +78,6 @@ impl ServerConfig {
 
                             info!("[Server] Connection terminated");
                         });
-
-                        monoio::time::sleep(std::time::Duration::from_secs(5))
-                            .await;
                     }
                 });
             });

@@ -12,6 +12,7 @@ fn main() -> anyhow::Result<()> {
     let config = Cfg::from_env()?;
 
     // Initialize tracing
+    // TODO: tracing slow af, should change to minitrace-rust
     let _ = Instruments::new()?;
 
     // Initialize memory storage
