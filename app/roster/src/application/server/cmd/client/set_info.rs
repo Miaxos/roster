@@ -4,6 +4,7 @@ use bytes::Bytes;
 
 use super::super::parse::{Parse, ParseError};
 use crate::application::server::connection::Connection;
+use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
 /// The CLIENT SETINFO command assigns various info attributes to the current
@@ -96,6 +97,7 @@ impl ClientSetInfo {
     pub(crate) async fn apply(
         self,
         dst: &mut Connection,
+        ctx: Context,
     ) -> anyhow::Result<()> {
         monoio::time::sleep(Duration::from_secs(3)).await;
         /*

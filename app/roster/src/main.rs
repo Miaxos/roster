@@ -1,4 +1,6 @@
+#![feature(negative_impls)]
 mod application;
+mod domain;
 mod infrastructure;
 
 use std::sync::Arc;

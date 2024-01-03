@@ -3,6 +3,7 @@ use super::CommandExecution;
 use crate::application::server::cmd::unknown::Unknown;
 use crate::application::server::cmd::{Command, SubcommandRegistry};
 use crate::application::server::connection::Connection;
+use crate::application::server::context::Context;
 
 mod set_info;
 
@@ -41,9 +42,13 @@ impl SubcommandRegistry for Client {
 }
 
 impl CommandExecution for Client {
-    async fn apply(self, dst: &mut Connection) -> anyhow::Result<()> {
+    async fn apply(
+        self,
+        dst: &mut Connection,
+        ctx: Context,
+    ) -> anyhow::Result<()> {
         match self {
-            Client::SetInfo(cmd) => cmd.apply(dst).await,
+            Client::SetInfo(cmd) => cmd.apply(dst, ctx).await,
         }
     }
 }

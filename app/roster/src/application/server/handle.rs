@@ -2,6 +2,7 @@ use tracing::info;
 
 use super::cmd::Command;
 use super::connection::Connection;
+use super::context::Context;
 
 /// Per-connection handler. Reads requests from `connection` and applies the
 /// commands.
@@ -16,7 +17,7 @@ impl Handler {
     ///
     /// Request frames are read from the socket and processed. Responses are
     /// written back to the socket.
-    pub async fn run(&mut self) -> anyhow::Result<()> {
+    pub async fn run(&mut self, ctx: Context) -> anyhow::Result<()> {
         loop {
             // TODO: Support pipelining
             let frame_opt = self.connection.read_frame().await?;
@@ -43,7 +44,7 @@ impl Handler {
 
             info!(?cmd);
 
-            cmd.apply(&mut self.connection).await?;
+            cmd.apply(&mut self.connection, ctx.clone()).await?;
         }
     }
 }

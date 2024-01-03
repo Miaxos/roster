@@ -1,4 +1,6 @@
+//! The whole redis server implementation is here.
 use std::net::SocketAddr;
+use std::rc::Rc;
 use std::sync::atomic::AtomicU16;
 use std::sync::Arc;
 use std::thread::JoinHandle;
@@ -16,6 +18,8 @@ use handle::Handler;
 mod cmd;
 
 use crate::application::server::connection::Connection;
+use crate::application::server::context::Context;
+use crate::domain;
 
 #[derive(Debug, Builder, Clone)]
 #[builder(pattern = "owned", setter(into, strip_option))]
@@ -35,9 +39,9 @@ cfg_if::cfg_if! {
 impl ServerConfig {
     pub fn initialize(self) -> ServerHandle {
         let mut threads = Vec::new();
-        let cpus: usize = std::thread::available_parallelism().unwrap().into();
+        let cpus: usize = 1; // std::thread::available_parallelism().unwrap().into();
 
-        for cpu in 1..cpus {
+        for cpu in 0..cpus {
             let config = self.clone();
             let handle = std::thread::spawn(move || {
                 info!("[Server] Spawned");
@@ -50,10 +54,15 @@ impl ServerConfig {
                     .expect("Cannot build runtime");
 
                 rt.block_on(async move {
+                    // Initialize domain
+                    let storage = Rc::new(domain::storage::Storage::default());
+
                     let listener = TcpListener::bind(config.bind_addr)
                         .expect("Couldn't listen to addr");
 
                     loop {
+                        let storage = storage.clone();
+
                         // listener.cancelable_accept(c)?
                         // We accept the TCP Connection
                         let (conn, _addr) = listener
@@ -74,7 +83,9 @@ impl ServerConfig {
                                 connection: Connection::new(conn, 4 * 1024),
                             };
 
-                            if let Err(err) = handler.run().await {
+                            let ctx = Context { storage };
+
+                            if let Err(err) = handler.run(ctx).await {
                                 error!(?err);
                             }
 

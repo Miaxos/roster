@@ -30,6 +30,7 @@ config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true
 monoio = { workspace = true, features = ["bytes", "sync"] }
+scc = "2"
 serde.workspace = true
 thiserror = "1"
 

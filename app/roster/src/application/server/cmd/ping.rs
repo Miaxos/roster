@@ -4,6 +4,7 @@ use tracing::info;
 use super::parse::{Parse, ParseError};
 use super::CommandExecution;
 use crate::application::server::connection::Connection;
+use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
 /// Returns PONG if no argument is provided, otherwise
@@ -53,7 +54,11 @@ impl Ping {
 }
 
 impl CommandExecution for Ping {
-    async fn apply(self, dst: &mut Connection) -> anyhow::Result<()> {
+    async fn apply(
+        self,
+        dst: &mut Connection,
+        ctx: Context,
+    ) -> anyhow::Result<()> {
         let response = match self.msg {
             None => Frame::Simple("PONG".to_string()),
             Some(msg) => Frame::Bulk(msg),

@@ -8,6 +8,10 @@ comptabile redis APIs.
 It is more like an expirement right now on, feel free to contribute. Some of the
 initial code involving the resp protocol comes from `mini-redis`.
 
+## Redis RESP
+
+Only the RESP3 is wanted for now.
+
 ## Architecture
 
 ### Shared nothing architecture

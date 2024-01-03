@@ -907,6 +907,7 @@ dependencies = [
  "monoio",
  "rand",
  "redis-async",
+ "scc",
  "serde",
  "thiserror",
  "tokio",
@@ -935,6 +936,12 @@ name = "ryu"
 version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f98d2aa92eebf49b69786be48e4477826b256916e84a57ff2a4f21923b48eb4c"
+
+[[package]]
+name = "scc"
+version = "2.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "426f7396cff4490b7410c25165f278eeab9e4209c5ae5269712f3ba99c29270d"
 
 [[package]]
 name = "scopeguard"

@@ -2,6 +2,7 @@ use tracing::info;
 
 use super::CommandExecution;
 use crate::application::server::connection::Connection;
+use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
 /// Represents an "unknown" command. This is not a real `Redis` command.
@@ -21,7 +22,11 @@ impl Unknown {
 }
 
 impl CommandExecution for Unknown {
-    async fn apply(self, dst: &mut Connection) -> anyhow::Result<()> {
+    async fn apply(
+        self,
+        dst: &mut Connection,
+        ctx: Context,
+    ) -> anyhow::Result<()> {
         let response = Frame::Error(format!(
             "ERR unknown command '{}'",
             self.command_name

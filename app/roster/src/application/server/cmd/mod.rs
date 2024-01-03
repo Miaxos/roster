@@ -4,6 +4,7 @@ use self::ping::Ping;
 use self::set::Set;
 use self::unknown::Unknown;
 use super::connection::Connection;
+use super::context::Context;
 use super::frame::Frame;
 
 mod parse;
@@ -26,7 +27,11 @@ pub enum Command {
 
 pub trait CommandExecution: Sized {
     /// Apply a command or a subcommand.
-    async fn apply(self, dst: &mut Connection) -> anyhow::Result<()>;
+    async fn apply(
+        self,
+        dst: &mut Connection,
+        ctx: Context,
+    ) -> anyhow::Result<()>;
 }
 
 pub trait SubcommandRegistry {
@@ -95,15 +100,15 @@ impl Command {
     pub(crate) async fn apply(
         self,
         dst: &mut Connection,
-        // shutdown: &mut Shutdown,
+        ctx: Context,
     ) -> anyhow::Result<()> {
         use Command::*;
 
         match self {
-            Ping(cmd) => cmd.apply(dst).await,
-            Unknown(cmd) => cmd.apply(dst).await,
-            Client(cmd) => cmd.apply(dst).await,
-            Set(cmd) => cmd.apply(dst).await,
+            Ping(cmd) => cmd.apply(dst, ctx).await,
+            Unknown(cmd) => cmd.apply(dst, ctx).await,
+            Client(cmd) => cmd.apply(dst, ctx).await,
+            Set(cmd) => cmd.apply(dst, ctx).await,
         }
     }
 }

@@ -6,6 +6,7 @@ use tracing::info;
 use super::parse::{Parse, ParseError};
 use super::CommandExecution;
 use crate::application::server::connection::Connection;
+use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
 /// Set key to hold the string value. If key already holds a value, it is
@@ -145,11 +146,14 @@ impl Set {
 }
 
 impl CommandExecution for Set {
-    async fn apply(self, dst: &mut Connection) -> anyhow::Result<()> {
-        /*
-        let response = match self.msg {
-            None => Frame::Simple("PONG".to_string()),
-            Some(msg) => Frame::Bulk(msg),
+    async fn apply(
+        self,
+        dst: &mut Connection,
+        ctx: Context,
+    ) -> anyhow::Result<()> {
+        let response = match ctx.storage.set_async(self.key, self.value).await {
+            Ok(_) => Frame::Simple("OK".to_string()),
+            Err(_) => Frame::Null,
         };
 
         info!(?response);
@@ -157,7 +161,6 @@ impl CommandExecution for Set {
         // Write the response back to the client
         dst.write_frame(&response).await?;
 
-        */
         Ok(())
     }
 }
