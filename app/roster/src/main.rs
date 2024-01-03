@@ -20,13 +20,15 @@ fn main() -> anyhow::Result<()> {
 
     // Initialize Roster LAN clusturing
 
-    // Initialize server to accept connections;
-    let _server = ServerConfigBuilder::default()
+    // Initialize server with Redis Protocol to accept connections;
+    let server = ServerConfigBuilder::default()
         .connections_limit(Arc::new(config.max_connection.into()))
         .bind_addr(config.bind_addr)
         .build()
         .expect("Couldn't create the config")
         .initialize();
+
+    server.join();
 
     Ok(())
 }

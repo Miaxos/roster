@@ -25,6 +25,7 @@ default = []
 anyhow.workspace = true
 atoi = "2"
 bytes.workspace = true
+cfg-if = "1"
 config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true

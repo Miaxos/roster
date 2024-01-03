@@ -1,5 +1,5 @@
 # The bind address we are going to listen to.
-bind_addr = "127.0.0.1:3456"
+bind_addr = "0.0.0.0:3456"
 # Maximum number of concurrent connections the redis server will accept.
 #
 # When this limit is reached, the server will stop accepting connections until

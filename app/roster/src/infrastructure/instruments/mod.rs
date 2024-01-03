@@ -12,7 +12,7 @@ impl Instruments {
     pub fn new() -> anyhow::Result<Self> {
         let subscriber = Registry::default()
             .with(tracing_subscriber::EnvFilter::from_default_env())
-            .with(tracing_subscriber::fmt::layer());
+            .with(tracing_subscriber::fmt::layer().with_thread_ids(true));
 
         tracing::subscriber::set_global_default(subscriber)
             .with_context(|| "cannot set global default subscriber")?;
