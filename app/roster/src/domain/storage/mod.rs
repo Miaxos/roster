@@ -49,4 +49,30 @@ impl Storage {
             }
         }
     }
+
+    /// Get a key
+    ///
+    /// Return None if it doesn't exist
+    pub async fn get_async(
+        &self,
+        key: String,
+        now: SystemTime,
+    ) -> Option<Bytes> {
+        match self.db.entry_async(key).await {
+            scc::hash_map::Entry::Occupied(oqp) => {
+                let val = oqp.get();
+                let is_expired =
+                    val.expired.map(|expired| now > expired).unwrap_or(false);
+
+                // TODO: Better handle expiration
+                if is_expired {
+                    // oqp.remove()?;
+                    None
+                } else {
+                    Some(val.val.clone())
+                }
+            }
+            scc::hash_map::Entry::Vacant(_) => None,
+        }
+    }
 }
