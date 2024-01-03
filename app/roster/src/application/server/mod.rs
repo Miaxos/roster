@@ -83,7 +83,7 @@ impl ServerConfig {
                                 connection: Connection::new(conn, 4 * 1024),
                             };
 
-                            let ctx = Context { storage };
+                            let ctx = Context::new(storage);
 
                             if let Err(err) = handler.run(ctx).await {
                                 error!(?err);

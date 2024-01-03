@@ -8,6 +8,7 @@ use super::CommandExecution;
 use crate::application::server::connection::Connection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
+use crate::domain::storage::SetOptions;
 
 /// Set key to hold the string value. If key already holds a value, it is
 /// overwritten, regardless of its type.
@@ -151,7 +152,16 @@ impl CommandExecution for Set {
         dst: &mut Connection,
         ctx: Context,
     ) -> anyhow::Result<()> {
-        let response = match ctx.storage.set_async(self.key, self.value).await {
+        let expired = match self.expire {
+            Some(dur) => Some(ctx.now() + dur),
+            None => None,
+        };
+
+        let response = match ctx
+            .storage
+            .set_async(self.key, self.value, SetOptions { expired })
+            .await
+        {
             Ok(_) => Frame::Simple("OK".to_string()),
             Err(_) => Frame::Null,
         };
