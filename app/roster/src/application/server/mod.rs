@@ -1,14 +1,13 @@
 use std::net::SocketAddr;
 use std::sync::atomic::AtomicU16;
 use std::sync::Arc;
-use std::time::Duration;
 
 use derive_builder::Builder;
-use monoio::io::AsyncReadRent;
 use monoio::net::TcpListener;
 use tracing::{error, info};
 
 mod connection;
+mod context;
 mod frame;
 mod handle;
 use handle::Handler;
@@ -19,13 +18,13 @@ use crate::application::server::connection::Connection;
 
 #[derive(Debug, Builder)]
 #[builder(pattern = "owned", setter(into, strip_option))]
-pub struct Server {
+pub struct ServerConfig {
     bind_addr: SocketAddr,
     connections_limit: Arc<AtomicU16>,
 }
 
-impl Server {
-    pub fn run(self) {
+impl ServerConfig {
+    pub fn initialize(self) -> ServerHandle {
         // Use IoUringDriver
         let mut rt = monoio::RuntimeBuilder::<monoio::LegacyDriver>::new()
             .enable_timer()
@@ -43,7 +42,8 @@ impl Server {
                     .await
                     .expect("Unable to accept connections");
 
-                // We map it to an `Handler` which is able to understand the Redis protocol
+                // We map it to an `Handler` which is able to understand the
+                // Redis protocol
 
                 let _spawned = monoio::spawn(async move {
                     info!(
@@ -58,9 +58,13 @@ impl Server {
                         error!(?err);
                     }
 
+                    info!("[Server] Connection terminated");
+
                     // monoio::time::sleep(Duration::from_secs(5)).await;
                 });
             }
         })
     }
 }
+
+pub struct ServerHandle {}

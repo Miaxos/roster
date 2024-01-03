@@ -3,10 +3,9 @@ mod infrastructure;
 
 use std::sync::Arc;
 
-use application::server::{ServerBuilder, ServerBuilderError};
+use application::server::ServerConfigBuilder;
 use infrastructure::config::Cfg;
 use infrastructure::instruments::Instruments;
-use tracing::info;
 
 fn main() -> anyhow::Result<()> {
     // Initialize config
@@ -22,13 +21,12 @@ fn main() -> anyhow::Result<()> {
     // Initialize Roster LAN clusturing
 
     // Initialize server to accept connections;
-    let server = ServerBuilder::default()
+    let _server = ServerConfigBuilder::default()
         .connections_limit(Arc::new(config.max_connection.into()))
         .bind_addr(config.bind_addr)
         .build()
-        .expect("Couldn't create the server");
-
-    server.run();
+        .expect("Couldn't create the config")
+        .initialize();
 
     Ok(())
 }

@@ -8,4 +8,4 @@ group_imports = "StdExternalCrate"
 enum_discrim_align_threshold = 40
 format_strings = true
 format_macro_bodies = true
-wrap_comments = false
+wrap_comments = true

@@ -11,8 +11,8 @@ pub struct Cfg {
     pub bind_addr: SocketAddr,
     /// Maximum number of concurrent connections the redis server will accept.
     ///
-    /// When this limit is reached, the server will stop accepting connections until
-    /// an active connection terminates.
+    /// When this limit is reached, the server will stop accepting connections
+    /// until an active connection terminates.
     pub max_connection: u16,
 }
 

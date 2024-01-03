@@ -28,7 +28,7 @@ bytes.workspace = true
 config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true
-monoio = { workspace = true, features = ["bytes"] }
+monoio = { workspace = true, features = ["bytes", "sync"] }
 serde.workspace = true
 thiserror = "1"
 
@@ -39,7 +39,7 @@ tracing-subscriber = { workspace = true, features = ["registry", "env-filter", "
 [dev-dependencies]
 insta.workspace = true
 rand = "0.8"
-redis = "0.24"
+redis-async = "0.16"
 tokio = { version = "1.4", features = [
   "macros",
   "rt-multi-thread",

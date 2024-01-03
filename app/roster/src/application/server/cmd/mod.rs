@@ -1,3 +1,4 @@
+use self::client_set_info::ClientSetInfo;
 use self::parse::Parse;
 use self::ping::Ping;
 use self::unknown::Unknown;
@@ -6,6 +7,7 @@ use super::frame::Frame;
 
 mod parse;
 
+mod client_set_info;
 mod ping;
 mod unknown;
 
@@ -14,6 +16,7 @@ mod unknown;
 /// Methods called on `Command` are delegated to the command implementation.
 #[derive(Debug)]
 pub enum Command {
+    ClientSetInfo(ClientSetInfo),
     Ping(Ping),
     Unknown(Unknown),
 }
@@ -44,6 +47,10 @@ impl Command {
         // specific command.
         let command = match &command_name[..] {
             "ping" => Command::Ping(Ping::parse_frames(&mut parse)?),
+            "client" => {
+                let _ = parse.next_string();
+                Command::ClientSetInfo(ClientSetInfo::parse_frames(&mut parse)?)
+            }
             _ => {
                 // The command is not recognized and an Unknown command is
                 // returned.
@@ -78,14 +85,7 @@ impl Command {
         match self {
             Ping(cmd) => cmd.apply(dst).await,
             Unknown(cmd) => cmd.apply(dst).await,
-        }
-    }
-
-    /// Returns the command name
-    pub(crate) fn get_name(&self) -> &str {
-        match self {
-            Command::Ping(_) => "ping",
-            Command::Unknown(cmd) => cmd.get_name(),
+            ClientSetInfo(cmd) => cmd.apply(dst).await,
         }
     }
 }

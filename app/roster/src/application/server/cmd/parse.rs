@@ -60,7 +60,8 @@ impl Parse {
 
     /// Return the next entry as a string.
     ///
-    /// If the next entry cannot be represented as a String, then an error is returned.
+    /// If the next entry cannot be represented as a String, then an error is
+    /// returned.
     pub(crate) fn next_string(&mut self) -> Result<String, ParseError> {
         match self.next()? {
             // Both `Simple` and `Bulk` representation may be strings. Strings

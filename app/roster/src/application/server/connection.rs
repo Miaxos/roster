@@ -1,7 +1,7 @@
 use std::io::{self, Cursor};
 
 use bytes::{Buf, BytesMut};
-use monoio::buf::{IoBuf, IoBufMut};
+use monoio::buf::{IoBuf, IoBufMut, IoVecBufMut, IoVecWrapper, Slice, VecBuf};
 use monoio::io::{AsyncReadRent, AsyncWriteRent, AsyncWriteRentExt, BufWriter};
 use monoio::net::TcpStream;
 
@@ -20,8 +20,8 @@ use super::frame::{self, Frame};
 /// When sending frames, the frame is first encoded into the write buffer.
 /// The contents of the write buffer are then written to the socket.
 pub struct Connection {
-    // The `TcpStream`. It is decorated with a `BufWriter`, which provides write
-    // level buffering.
+    // The `TcpStream`. It is decorated with a `BufWriter`, which provides
+    // write level buffering.
     stream: BufWriter<TcpStream>,
 
     // The buffer for reading frames.
@@ -51,17 +51,17 @@ impl Connection {
     /// `None`. Otherwise, an error is returned.
     pub async fn read_frame(&mut self) -> anyhow::Result<Option<Frame>> {
         loop {
-            let a = String::from_utf8(self.buffer.clone().to_vec());
-            tracing::info!(?a);
             // Attempt to parse a frame from the buffered data. If enough data
             // has been buffered, the frame is returned.
             if let Some(frame) = self.parse_frame()? {
+                tracing::info!("blbl");
                 return Ok(Some(frame));
             }
 
             let mut in_going = BytesMut::new();
             std::mem::swap(&mut self.buffer, &mut in_going);
 
+            // TODO: Timeout
             let (size, buf) = self.stream.read(in_going).await;
             self.buffer = buf;
 
@@ -153,21 +153,20 @@ impl Connection {
     ///
     /// The `Frame` value is written to the socket using the various `write_*`
     /// functions provided by `AsyncWrite`. Calling these functions directly on
-    /// a `TcpStream` is **not** advised, as this will result in a large number of
-    /// syscalls. However, it is fine to call these functions on a *buffered*
-    /// write stream. The data will be written to the buffer. Once the buffer is
-    /// full, it is flushed to the underlying socket.
+    /// a `TcpStream` is **not** advised, as this will result in a large number
+    /// of syscalls. However, it is fine to call these functions on a
+    /// *buffered* write stream. The data will be written to the buffer.
+    /// Once the buffer is full, it is flushed to the underlying socket.
     pub async fn write_frame(&mut self, frame: &Frame) -> io::Result<()> {
         // Arrays are encoded by encoding each entry. All other frame types are
         // considered literals. For now, mini-redis is not able to encode
         // recursive frame structures. See below for more details.
         match frame {
             Frame::Array(val) => {
-                // Encode the frame type prefix. For an array, it is `*`.
-                self.stream.write(&[b'*']).await.0?;
-
                 // Encode the length of the array.
-                self.write_decimal(val.len() as u64).await?;
+                let decimal = self.get_decimal(val.len() as u64)?;
+                let res = [&[b'*'], decimal.as_slice()].concat().slice(..);
+                self.stream.write(res).await.0?;
 
                 // Iterate and encode each entry in the array.
                 for entry in &**val {
@@ -188,31 +187,33 @@ impl Connection {
     async fn write_value(&mut self, frame: &Frame) -> io::Result<()> {
         match frame {
             Frame::Simple(val) => {
-                self.stream.write(&[b'+']).await.0?;
-                let val = val.as_bytes().to_vec();
-                self.stream.write_all(val).await.0?;
-                self.stream.write_all(b"\r\n").await.0?;
+                let res = [&[b'+'], val.as_bytes(), &[b'\r', b'\n']]
+                    .concat()
+                    .slice(..);
+                self.stream.write(res).await.0?;
             }
             Frame::Error(val) => {
-                self.stream.write(&[b'-']).await.0?;
-                let val = val.as_bytes().to_vec();
-                self.stream.write_all(val).await.0?;
-                self.stream.write_all(b"\r\n").await.0?;
+                let res = [&[b'-'], val.as_bytes(), &[b'\r', b'\n']]
+                    .concat()
+                    .slice(..);
+                self.stream.write(res).await.0?;
             }
             Frame::Integer(val) => {
-                self.stream.write(&[b':']).await.0?;
-                self.write_decimal(*val).await?;
+                let decimal = self.get_decimal(*val)?;
+                let res = [&[b':'], decimal.as_slice()].concat().slice(..);
+                self.stream.write(res).await.0?;
             }
             Frame::Null => {
                 self.stream.write_all(b"$-1\r\n").await.0?;
             }
             Frame::Bulk(val) => {
                 let len = val.len();
+                let decimal = self.get_decimal(len as u64)?;
 
-                self.stream.write(&[b'$']).await.0?;
-                self.write_decimal(len as u64).await?;
-                self.stream.write_all(val.slice(..)).await.0?;
-                self.stream.write_all(b"\r\n").await.0?;
+                let res = [&[b'$'], decimal.as_slice(), val, &[b'\r', b'\n']]
+                    .concat()
+                    .slice(..);
+                self.stream.write(res).await.0?;
             }
             // Encoding an `Array` from within a value cannot be done using a
             // recursive strategy. In general, async fns do not support
@@ -225,19 +226,19 @@ impl Connection {
     }
 
     /// Write a decimal frame to the stream
-    async fn write_decimal(&mut self, val: u64) -> io::Result<()> {
+    fn get_decimal(&mut self, val: u64) -> io::Result<Vec<u8>> {
         use std::io::Write;
 
         // Convert the value to a string
-        let buf = vec![0u8; 20];
-        let mut buf = Cursor::new(buf);
+        let mut buf = [0u8; 20];
+        let mut buf = Cursor::new(&mut buf[..]);
         write!(&mut buf, "{}", val)?;
 
         let pos = buf.position() as usize;
-        let slice = buf.into_inner().slice(..pos);
-        self.stream.write(slice).await.0?;
-        self.stream.write_all(b"\r\n").await.0?;
+        let a = &buf.get_ref()[..pos];
 
-        Ok(())
+        let res = [a, &[b'\r', b'\n']].concat();
+
+        Ok(res)
     }
 }
