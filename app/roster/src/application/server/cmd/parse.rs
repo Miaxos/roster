@@ -1,4 +1,4 @@
-use std::{fmt, str, vec};
+use std::{str, vec};
 
 use bytes::Bytes;
 

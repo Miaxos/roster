@@ -1,7 +1,7 @@
 use std::io::{self, Cursor};
 
 use bytes::{Buf, BytesMut};
-use monoio::buf::{IoBuf, IoBufMut, IoVecBufMut, IoVecWrapper, Slice, VecBuf};
+use monoio::buf::{IoBuf};
 use monoio::io::{AsyncReadRent, AsyncWriteRent, AsyncWriteRentExt, BufWriter};
 use monoio::net::TcpStream;
 

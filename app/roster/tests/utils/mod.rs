@@ -14,12 +14,12 @@ pub fn start_simple_server() -> SocketAddr {
     );
     let server_config = ServerConfigBuilder::default()
         .connections_limit(Arc::new(20.into()))
-        .bind_addr(addr.clone())
+        .bind_addr(addr)
         .build()
         .unwrap();
     let _handle = std::thread::spawn(move || {
         server_config.initialize();
-        ()
+        
     });
     addr
 }

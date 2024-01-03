@@ -1,11 +1,11 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use tracing::info;
+
 
 use super::parse::{Parse, ParseError};
 use crate::application::server::connection::Connection;
-use crate::application::server::frame::Frame;
+
 
 /// The CLIENT SETINFO command assigns various info attributes to the current
 /// connection which are displayed in the output of CLIENT LIST and CLIENT INFO.
@@ -111,7 +111,7 @@ impl ClientSetInfo {
     /// to execute a received command.
     pub(crate) async fn apply(
         self,
-        dst: &mut Connection,
+        _dst: &mut Connection,
     ) -> anyhow::Result<()> {
         monoio::time::sleep(Duration::from_secs(3)).await;
         /*
