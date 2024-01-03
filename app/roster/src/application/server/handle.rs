@@ -4,16 +4,10 @@ use super::cmd::Command;
 use super::connection::Connection;
 
 /// Per-connection handler. Reads requests from `connection` and applies the
-/// commands to `db`.
+/// commands.
 pub struct Handler {
     /// The TCP connection decorated with the redis protocol encoder / decoder
     /// implemented using a buffered `TcpStream`.
-    ///
-    /// When `Listener` receives an inbound connection, the `TcpStream` is
-    /// passed to `Connection::new`, which initializes the associated buffers.
-    /// `Connection` allows the handler to operate at the "frame" level and
-    /// keep the byte level protocol parsing details encapsulated in
-    /// `Connection`.
     pub connection: Connection,
 }
 
@@ -41,6 +35,11 @@ impl Handler {
             // error if the frame is not a valid redis command or it is an
             // unsupported command.
             let cmd = Command::from_frame(frame)?;
+
+            // TODO: Sharding: here the command know if it's about a specific
+            // key, so we are able to do the sharding here.
+            //
+            // Either we send the connection & the cmd to the proper thread
 
             info!(?cmd);
 

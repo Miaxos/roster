@@ -48,11 +48,13 @@ impl ServerConfig {
                     .enable_timer()
                     .build()
                     .expect("Cannot build runtime");
+
                 rt.block_on(async move {
                     let listener = TcpListener::bind(config.bind_addr)
                         .expect("Couldn't listen to addr");
 
                     loop {
+                        // listener.cancelable_accept(c)?
                         // We accept the TCP Connection
                         let (conn, _addr) = listener
                             .accept()

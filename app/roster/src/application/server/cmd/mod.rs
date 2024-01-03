@@ -1,6 +1,7 @@
 use self::client::Client;
 use self::parse::Parse;
 use self::ping::Ping;
+use self::set::Set;
 use self::unknown::Unknown;
 use super::connection::Connection;
 use super::frame::Frame;
@@ -9,6 +10,7 @@ mod parse;
 
 mod client;
 mod ping;
+mod set;
 mod unknown;
 
 /// Enumeration of supported Redis commands.
@@ -18,6 +20,7 @@ mod unknown;
 pub enum Command {
     Client(Client),
     Ping(Ping),
+    Set(Set),
     Unknown(Unknown),
 }
 
@@ -60,10 +63,11 @@ impl Command {
         // Match the command name, delegating the rest of the parsing to the
         // specific command.
         let command = match &command_name[..] {
-            "ping" => Command::Ping(Ping::parse_frames(&mut parse)?),
             "client" => {
                 return Client::from_parse(parse);
             }
+            "ping" => Command::Ping(Ping::parse_frames(&mut parse)?),
+            "set" => Command::Set(Set::parse_frames(&mut parse)?),
             _ => {
                 // The command is not recognized and an Unknown command is
                 // returned.
@@ -99,6 +103,7 @@ impl Command {
             Ping(cmd) => cmd.apply(dst).await,
             Unknown(cmd) => cmd.apply(dst).await,
             Client(cmd) => cmd.apply(dst).await,
+            Set(cmd) => cmd.apply(dst).await,
         }
     }
 }
