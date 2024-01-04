@@ -44,11 +44,12 @@ impl ServerConfig {
         for cpu in 0..cpus {
             let config = self.clone();
             let handle = std::thread::spawn(move || {
-                info!("[Server] Spawned");
+                // info!("[Server] Spawned");
+                dbg!(cpu);
                 monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
 
                 let mut rt = monoio::RuntimeBuilder::<Driver>::new()
-                    .with_entries(32768)
+                    .with_entries(1024)
                     .enable_timer()
                     .build()
                     .expect("Cannot build runtime");
@@ -74,10 +75,12 @@ impl ServerConfig {
                         // the Redis protocol
 
                         let _spawned = monoio::spawn(async move {
+                            /*
                             info!(
                                 "[Server] Accepted a new connection, will \
                                  read form it"
                             );
+                            */
 
                             let mut handler = Handler {
                                 connection: Connection::new(conn, 4 * 1024),
@@ -86,10 +89,12 @@ impl ServerConfig {
                             let ctx = Context::new(storage);
 
                             if let Err(err) = handler.run(ctx).await {
-                                error!(?err);
+                                // error!(?err);
+                                panic!("blbl");
                             }
+                            // handler.connection.stop().await.unwrap();
 
-                            info!("[Server] Connection terminated");
+                            // info!("[Server] Connection terminated");
                         });
                     }
                 });

@@ -1,12 +1,13 @@
 [target.'cfg(any(unix, not(unix))']
 rustflags = ["-Zmacro-backtrace", "-Zdebug-macros"]
 
-[target.x86_64-unknown-linux-gnu]
+[target.aarch64-unknown-linux-gnu]
 rustflags = [
     "-Zmacro-backtrace",
-    "-Zdebug-macros"
-#    "-C",
-#    "link-arg=-fuse-ld=mold"
+    "-Zdebug-macros", 
+    "-Zthreads=4",
+    "-C",
+    "link-arg=-fuse-ld=mold"
 ]
 
 [target.aarch64-apple-darwin]

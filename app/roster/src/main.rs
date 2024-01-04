@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
 
     // Initialize tracing
     // TODO: tracing slow af, should change to minitrace-rust
-    let _ = Instruments::new()?;
+    // let _ = Instruments::new()?;
 
     // Initialize memory storage
 

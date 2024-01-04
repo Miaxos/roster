@@ -1,6 +1,6 @@
 use std::{str, vec};
 
-use bytes::Bytes;
+use bytes::{Buf, Bytes};
 
 use crate::application::server::frame::Frame;
 
@@ -70,9 +70,13 @@ impl Parse {
             // While errors are stored as strings, they are considered separate
             // types.
             Frame::Simple(s) => Ok(s),
-            Frame::Bulk(data) => str::from_utf8(&data[..])
-                .map(|s| s.to_string())
-                .map_err(|_| "protocol error; invalid string".into()),
+            Frame::Bulk(data) => {
+                String::from_utf8(data.to_vec()).map_err(|_| {
+                    ParseError::Other(anyhow::anyhow!(
+                        "protocol error; invalid string"
+                    ))
+                })
+            }
             frame => Err(format!(
                 "protocol error; expected simple frame or bulk frame, got {:?}",
                 frame

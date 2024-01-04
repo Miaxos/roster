@@ -12,6 +12,11 @@ pub async fn test_simple_client_set_key() {
         .await
         .unwrap();
 
-    // TODO: need to check connections
     assert_eq!(res_f, "OK");
+
+    let res_f: String =
+        connection.send(resp_array!["GET", "mykey"]).await.unwrap();
+
+    // TODO: need to check connections
+    assert_eq!(res_f, "hello");
 }

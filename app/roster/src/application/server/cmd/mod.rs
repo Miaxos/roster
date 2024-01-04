@@ -1,4 +1,5 @@
 use self::client::Client;
+use self::get::Get;
 use self::parse::Parse;
 use self::ping::Ping;
 use self::set::Set;
@@ -10,6 +11,7 @@ use super::frame::Frame;
 mod parse;
 
 mod client;
+mod get;
 mod ping;
 mod set;
 mod unknown;
@@ -22,6 +24,7 @@ pub enum Command {
     Client(Client),
     Ping(Ping),
     Set(Set),
+    Get(Get),
     Unknown(Unknown),
 }
 
@@ -73,6 +76,7 @@ impl Command {
             }
             "ping" => Command::Ping(Ping::parse_frames(&mut parse)?),
             "set" => Command::Set(Set::parse_frames(&mut parse)?),
+            "get" => Command::Get(Get::parse_frames(&mut parse)?),
             _ => {
                 // The command is not recognized and an Unknown command is
                 // returned.
@@ -109,6 +113,7 @@ impl Command {
             Unknown(cmd) => cmd.apply(dst, ctx).await,
             Client(cmd) => cmd.apply(dst, ctx).await,
             Set(cmd) => cmd.apply(dst, ctx).await,
+            Get(cmd) => cmd.apply(dst, ctx).await,
         }
     }
 }

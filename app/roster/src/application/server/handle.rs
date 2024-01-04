@@ -1,3 +1,4 @@
+use monoio::time::Instant;
 use tracing::info;
 
 use super::cmd::Command;
@@ -20,7 +21,10 @@ impl Handler {
     pub async fn run(&mut self, ctx: Context) -> anyhow::Result<()> {
         loop {
             // TODO: Support pipelining
+            // let now = Instant::now();
             let frame_opt = self.connection.read_frame().await?;
+            // let elasped = now.elapsed();
+            // dbg!(elasped);
 
             // If `None` is returned from `read_frame()` then the peer closed
             // the socket. There is no further work to do and the task can be
@@ -30,7 +34,7 @@ impl Handler {
                 None => return Ok(()),
             };
 
-            info!(?frame);
+            // info!(?frame);
 
             // Convert the redis frame into a command struct. This returns an
             // error if the frame is not a valid redis command or it is an
@@ -42,7 +46,7 @@ impl Handler {
             //
             // Either we send the connection & the cmd to the proper thread
 
-            info!(?cmd);
+            // info!(?cmd);
 
             cmd.apply(&mut self.connection, ctx.clone()).await?;
         }

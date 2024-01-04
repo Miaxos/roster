@@ -1,8 +1,11 @@
 use std::io::{self, Cursor};
 
-use bytes::{Buf, BytesMut};
+use bytes::{Buf, Bytes, BytesMut};
 use monoio::buf::IoBuf;
-use monoio::io::{AsyncReadRent, AsyncWriteRent, AsyncWriteRentExt, BufWriter};
+use monoio::io::{
+    AsyncBufReadExt, AsyncReadRent, AsyncWriteRent, AsyncWriteRentExt,
+    BufReader, BufWriter, OwnedReadHalf, OwnedWriteHalf, Splitable,
+};
 use monoio::net::TcpStream;
 
 use super::frame::{self, Frame};
@@ -20,9 +23,10 @@ use super::frame::{self, Frame};
 /// When sending frames, the frame is first encoded into the write buffer.
 /// The contents of the write buffer are then written to the socket.
 pub struct Connection {
+    pub stream_r: BufReader<OwnedReadHalf<TcpStream>>,
     // The `TcpStream`. It is decorated with a `BufWriter`, which provides
     // write level buffering.
-    stream: BufWriter<TcpStream>,
+    stream_w: BufWriter<OwnedWriteHalf<TcpStream>>,
 
     // The buffer for reading frames.
     buffer: BytesMut,
@@ -32,8 +36,11 @@ impl Connection {
     /// Create a new `Connection`, backed by `socket`. Read and write buffers
     /// are initialized.
     pub fn new(socket: TcpStream, buf_size: usize) -> Connection {
+        let (read, write) = socket.into_split();
+
         Connection {
-            stream: BufWriter::new(socket),
+            stream_r: BufReader::new(read),
+            stream_w: BufWriter::new(write),
             buffer: BytesMut::with_capacity(buf_size),
         }
     }
@@ -61,7 +68,7 @@ impl Connection {
             std::mem::swap(&mut self.buffer, &mut in_going);
 
             // TODO: Timeout
-            let (size, buf) = self.stream.read(in_going).await;
+            let (size, buf) = self.stream_r.read(in_going).await;
             self.buffer = buf;
 
             // There is not enough buffered data to read a frame. Attempt to
@@ -96,6 +103,8 @@ impl Connection {
         // with bytes.
         let mut buf = Cursor::new(&self.buffer[..]);
 
+        // TODO: Change this because we do a lot of useless copy
+
         // The first step is to check if enough data has been buffered to parse
         // a single frame. This step is usually much faster than doing a full
         // parse of the frame, and allows us to skip allocating data structures
@@ -129,6 +138,7 @@ impl Connection {
                 // left to `BytesMut`. This is often done by moving an internal
                 // cursor, but it may be done by reallocating and copying data.
                 self.buffer.advance(len);
+                self.buffer.reserve(4 * 1024);
 
                 // Return the parsed frame to the caller.
                 Ok(Some(frame))
@@ -163,9 +173,8 @@ impl Connection {
         match frame {
             Frame::Array(val) => {
                 // Encode the length of the array.
-                let decimal = self.get_decimal(val.len() as u64)?;
-                let res = [&[b'*'], decimal.as_slice()].concat().slice(..);
-                self.stream.write(res).await.0?;
+                self.stream_w.write(&[b'*']).await.0?;
+                self.write_decimal(val.len() as u64).await?;
 
                 // Iterate and encode each entry in the array.
                 for entry in &**val {
@@ -179,7 +188,7 @@ impl Connection {
         // Ensure the encoded frame is written to the socket. The calls above
         // are to the buffered stream and writes. Calling `flush` writes the
         // remaining contents of the buffer to the socket.
-        self.stream.flush().await
+        self.stream_w.flush().await
     }
 
     /// Write a frame literal to the stream
@@ -189,30 +198,28 @@ impl Connection {
                 let res = [&[b'+'], val.as_bytes(), &[b'\r', b'\n']]
                     .concat()
                     .slice(..);
-                self.stream.write(res).await.0?;
+                self.stream_w.write(res).await.0?;
             }
             Frame::Error(val) => {
                 let res = [&[b'-'], val.as_bytes(), &[b'\r', b'\n']]
                     .concat()
                     .slice(..);
-                self.stream.write(res).await.0?;
+                self.stream_w.write(res).await.0?;
             }
             Frame::Integer(val) => {
-                let decimal = self.get_decimal(*val)?;
-                let res = [&[b':'], decimal.as_slice()].concat().slice(..);
-                self.stream.write(res).await.0?;
+                self.stream_w.write(&[b':']).await.0?;
+                self.write_decimal(*val as u64).await?;
             }
             Frame::Null => {
-                self.stream.write_all(b"$-1\r\n").await.0?;
+                self.stream_w.write_all(b"$-1\r\n").await.0?;
             }
             Frame::Bulk(val) => {
                 let len = val.len();
-                let decimal = self.get_decimal(len as u64)?;
 
-                let res = [&[b'$'], decimal.as_slice(), val, &[b'\r', b'\n']]
-                    .concat()
-                    .slice(..);
-                self.stream.write(res).await.0?;
+                self.stream_w.write(&[b'$']).await.0?;
+                self.write_decimal(len as u64).await?;
+                self.stream_w.write(val.slice(..)).await.0?;
+                self.stream_w.write(&[b'\r', b'\n']).await.0?;
             }
             // Encoding an `Array` from within a value cannot be done using a
             // recursive strategy. In general, async fns do not support
@@ -224,20 +231,27 @@ impl Connection {
         Ok(())
     }
 
-    /// Write a decimal frame to the stream
-    fn get_decimal(&mut self, val: u64) -> io::Result<Vec<u8>> {
+    /// Write a decimal frame to the stream_w
+    async fn write_decimal(&mut self, val: u64) -> io::Result<()> {
         use std::io::Write;
 
         // Convert the value to a string
-        let mut buf = [0u8; 20];
-        let mut buf = Cursor::new(&mut buf[..]);
+        let buf = vec![0u8; 20];
+        let mut buf = Cursor::new(buf);
         write!(&mut buf, "{}", val)?;
 
         let pos = buf.position() as usize;
-        let a = &buf.get_ref()[..pos];
 
-        let res = [a, &[b'\r', b'\n']].concat();
+        self.stream_w
+            .write_all(buf.into_inner().slice(..pos))
+            .await
+            .0?;
+        self.stream_w.write_all(b"\r\n").await.0?;
 
-        Ok(res)
+        Ok(())
+    }
+
+    pub async fn stop(&mut self) -> anyhow::Result<()> {
+        Ok(())
     }
 }
