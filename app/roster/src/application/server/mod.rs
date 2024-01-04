@@ -39,7 +39,7 @@ cfg_if::cfg_if! {
 impl ServerConfig {
     pub fn initialize(self) -> ServerHandle {
         let mut threads = Vec::new();
-        let cpus: usize = 1; // std::thread::available_parallelism().unwrap().into();
+        let cpus: usize = std::thread::available_parallelism().unwrap().into();
 
         for cpu in 0..cpus {
             let config = self.clone();
