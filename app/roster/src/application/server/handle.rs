@@ -25,7 +25,7 @@ impl Handler {
             let now = Instant::now();
             let frame_opt = self.connection.read_frame().await?;
             let elasped = now.elapsed();
-            // dbg!(elasped);
+            //  dbg!(elasped);
 
             // If `None` is returned from `read_frame()` then the peer closed
             // the socket. There is no further work to do and the task can be
@@ -57,7 +57,7 @@ impl Handler {
             let now = Instant::now();
             cmd.apply(&mut self.connection, ctx.clone()).await?;
             let elasped = now.elapsed();
-            dbg!(elasped);
+            // dbg!(elasped);
         }
     }
 }
