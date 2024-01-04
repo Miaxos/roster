@@ -21,9 +21,10 @@ impl Handler {
     pub async fn run(&mut self, ctx: Context) -> anyhow::Result<()> {
         loop {
             // TODO: Support pipelining
-            // let now = Instant::now();
+            // 300us
+            let now = Instant::now();
             let frame_opt = self.connection.read_frame().await?;
-            // let elasped = now.elapsed();
+            let elasped = now.elapsed();
             // dbg!(elasped);
 
             // If `None` is returned from `read_frame()` then the peer closed
@@ -39,7 +40,11 @@ impl Handler {
             // Convert the redis frame into a command struct. This returns an
             // error if the frame is not a valid redis command or it is an
             // unsupported command.
+            // 100 ns
+            let now = Instant::now();
             let cmd = Command::from_frame(frame)?;
+            let elasped = now.elapsed();
+            // dbg!(elasped);
 
             // TODO: Sharding: here the command know if it's about a specific
             // key, so we are able to do the sharding here.
@@ -48,7 +53,11 @@ impl Handler {
 
             // info!(?cmd);
 
+            // 400us
+            let now = Instant::now();
             cmd.apply(&mut self.connection, ctx.clone()).await?;
+            let elasped = now.elapsed();
+            dbg!(elasped);
         }
     }
 }
