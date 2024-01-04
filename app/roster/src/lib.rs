@@ -1,6 +1,6 @@
 #![feature(negative_impls)]
-mod application;
-mod domain;
-mod infrastructure;
+pub mod application;
+pub mod domain;
+pub mod infrastructure;
 
 pub use application::server::ServerConfigBuilder;

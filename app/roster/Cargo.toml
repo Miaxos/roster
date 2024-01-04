@@ -39,6 +39,7 @@ tracing = { workspace = true, features = ["attributes"] }
 tracing-subscriber = { workspace = true, features = ["registry", "env-filter", "json"] }
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["async", "html_reports"] }
 insta.workspace = true
 rand = "0.8"
 redis-async = "0.16"
@@ -50,3 +51,7 @@ tokio = { version = "1.4", features = [
   "io-util",
   "net",
 ] }
+
+[[bench]]
+name = "parsing"
+harness = false

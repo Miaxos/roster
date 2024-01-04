@@ -11,7 +11,7 @@ use tracing::{error, info};
 
 mod connection;
 mod context;
-mod frame;
+pub mod frame;
 mod handle;
 use handle::Handler;
 
