@@ -251,6 +251,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "702fc72eb24e5a1e48ce58027a675bc24edd52096d5397d4aea7c6dd9eca0bd1"
 
 [[package]]
+name = "coarsetime"
+version = "0.1.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71367d3385c716342014ad17e3d19f7788ae514885a1f4c24f500260fb365e1a"
+dependencies = [
+ "libc",
+ "once_cell",
+ "wasi",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "config"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1359,6 +1371,7 @@ dependencies = [
  "atoi",
  "bytes",
  "cfg-if",
+ "coarsetime",
  "config",
  "criterion",
  "derive_builder",

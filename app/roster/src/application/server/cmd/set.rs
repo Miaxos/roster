@@ -153,7 +153,7 @@ impl CommandExecution for Set {
         ctx: Context,
     ) -> anyhow::Result<()> {
         let expired = match self.expire {
-            Some(dur) => Some(ctx.now() + dur),
+            Some(dur) => Some(ctx.now() + dur.into()),
             None => None,
         };
 
@@ -166,7 +166,7 @@ impl CommandExecution for Set {
             Err(_) => Frame::Null,
         };
 
-        info!(?response);
+        // info!(?response);
 
         // Write the response back to the client
         dst.write_frame(&response).await?;

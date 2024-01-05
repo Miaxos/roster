@@ -3,6 +3,7 @@
 use std::time::SystemTime;
 
 use bytes::Bytes;
+use coarsetime::Instant;
 use scc::HashMap;
 
 // We disallow Send just to be sure
@@ -10,7 +11,7 @@ impl !Send for Storage {}
 
 #[derive(Debug)]
 pub struct StorageValue {
-    pub expired: Option<SystemTime>,
+    pub expired: Option<Instant>,
     pub val: Bytes,
 }
 
@@ -22,7 +23,7 @@ pub struct Storage {
 
 #[derive(Default)]
 pub struct SetOptions {
-    pub expired: Option<SystemTime>,
+    pub expired: Option<Instant>,
 }
 
 impl Storage {
@@ -53,11 +54,7 @@ impl Storage {
     /// Get a key
     ///
     /// Return None if it doesn't exist
-    pub async fn get_async(
-        &self,
-        key: String,
-        now: SystemTime,
-    ) -> Option<Bytes> {
+    pub async fn get_async(&self, key: String, now: Instant) -> Option<Bytes> {
         match self.db.entry_async(key).await {
             scc::hash_map::Entry::Occupied(oqp) => {
                 let val = oqp.get();

@@ -71,6 +71,8 @@ impl ServerConfig {
                             .await
                             .expect("Unable to accept connections");
 
+                        conn.set_nodelay(true).unwrap();
+
                         // We map it to an `Handler` which is able to understand
                         // the Redis protocol
 
@@ -89,6 +91,7 @@ impl ServerConfig {
                             let ctx = Context::new(storage);
 
                             if let Err(err) = handler.run(ctx).await {
+                                dbg!(&err);
                                 // error!(?err);
                                 panic!("blbl");
                             }

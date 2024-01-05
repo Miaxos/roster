@@ -28,13 +28,10 @@ impl CommandExecution for Get {
         dst: &mut Connection,
         ctx: Context,
     ) -> anyhow::Result<()> {
-        /*
         let response = match ctx.storage.get_async(self.key, ctx.now()).await {
             Some(val) => Frame::Bulk(val),
             None => Frame::Null,
         };
-        */
-        let response = Frame::Null;
 
         // info!(?response);
 

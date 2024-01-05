@@ -1,31 +1,33 @@
 use std::cell::Cell;
 use std::rc::Rc;
-use std::time::SystemTime;
+
+use coarsetime::Instant;
 
 use crate::domain::storage::Storage;
 
 #[derive(Clone)]
 pub struct Context {
     pub storage: Rc<Storage>,
-    now: Cell<Option<SystemTime>>,
+    now: Cell<bool>,
 }
 
 impl Context {
     pub fn new(storage: Rc<Storage>) -> Self {
         Self {
             storage,
-            now: Cell::new(None),
+            now: Cell::new(false),
         }
     }
 
-    pub fn now(&self) -> SystemTime {
+    pub fn now(&self) -> Instant {
         let now = self.now.get();
-        if now.is_none() {
-            let n = SystemTime::now();
-            self.now.set(Some(n));
-            return n;
+        if now {
+            coarsetime::Instant::recent()
+        } else {
+            // TODO: Have each thread update the coarsetime every 50ms so we
+            // avoid to call it manually each time, it will gain us some ns
+            self.now.set(true);
+            coarsetime::Instant::now()
         }
-
-        now.expect("Can't fail")
     }
 }
