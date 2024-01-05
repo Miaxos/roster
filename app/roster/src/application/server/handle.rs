@@ -20,9 +20,10 @@ impl Handler {
     /// written back to the socket.
     pub async fn run(&mut self, ctx: Context) -> anyhow::Result<()> {
         loop {
-            // let now = Instant::now();
+            // ----------------------------------------------------------------
+            // This should belong to the transport layer
+            // ---------------------------------------------------------------
             // TODO: Support pipelining
-            // 300us
             let frame_opt = self.connection.read_frame().await?;
 
             // If `None` is returned from `read_frame()` then the peer closed
@@ -33,26 +34,28 @@ impl Handler {
                 None => return Ok(()),
             };
 
-            // info!(?frame);
-
             // Convert the redis frame into a command struct. This returns an
             // error if the frame is not a valid redis command or it is an
             // unsupported command.
             // 100 ns
             let cmd = Command::from_frame(frame)?;
-            // dbg!(elasped);
+
+            // TODO: Command must impl rkyv to be able to be send over another
+            // thread
+
+            // ----------------------------------------------------------------
+            // Sharding here
 
             // TODO: Sharding: here the command know if it's about a specific
             // key, so we are able to do the sharding here.
             //
-            // Either we send the connection & the cmd to the proper thread
+            // Connection is not Send, but if the data is not in the good
+            // thread, we still have to communicate the command and wait for the
+            // response
 
-            // info!(?cmd);
-
-            // 400us
+            // TODO: Rework the apply because we do not have the initial
+            // connection but we should have a stream to the `stream_w` part.
             cmd.apply(&mut self.connection, ctx.clone()).await?;
-            // let elasped = now.elapsed();
-            // dbg!(elasped);
         }
     }
 }

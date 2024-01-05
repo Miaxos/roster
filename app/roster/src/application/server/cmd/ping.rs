@@ -64,8 +64,6 @@ impl CommandExecution for Ping {
             Some(msg) => Frame::Bulk(msg),
         };
 
-        info!(?response);
-
         // Write the response back to the client
         dst.write_frame(&response).await?;
 

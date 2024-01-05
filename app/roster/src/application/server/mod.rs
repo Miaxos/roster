@@ -39,7 +39,7 @@ cfg_if::cfg_if! {
 impl ServerConfig {
     pub fn initialize(self) -> ServerHandle {
         let mut threads = Vec::new();
-        let cpus: usize = std::thread::available_parallelism().unwrap().into();
+        let cpus: usize = 1; //std::thread::available_parallelism().unwrap().into();
 
         for cpu in 0..cpus {
             let config = self.clone();
@@ -77,13 +77,6 @@ impl ServerConfig {
                         // the Redis protocol
 
                         let _spawned = monoio::spawn(async move {
-                            /*
-                            info!(
-                                "[Server] Accepted a new connection, will \
-                                 read form it"
-                            );
-                            */
-
                             let mut handler = Handler {
                                 connection: Connection::new(conn, 4 * 1024),
                             };
@@ -91,13 +84,12 @@ impl ServerConfig {
                             let ctx = Context::new(storage);
 
                             if let Err(err) = handler.run(ctx).await {
+                                dbg!(err.backtrace());
                                 dbg!(&err);
                                 // error!(?err);
                                 panic!("blbl");
                             }
                             // handler.connection.stop().await.unwrap();
-
-                            // info!("[Server] Connection terminated");
                         });
                     }
                 });

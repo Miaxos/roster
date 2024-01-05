@@ -166,8 +166,6 @@ impl CommandExecution for Set {
             Err(_) => Frame::Null,
         };
 
-        // info!(?response);
-
         // Write the response back to the client
         dst.write_frame(&response).await?;
 

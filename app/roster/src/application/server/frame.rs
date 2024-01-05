@@ -299,3 +299,23 @@ impl From<TryFromIntError> for Error {
         "protocol error; invalid frame format".into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::Frame;
+
+    #[test]
+    fn test_simple_frame() {
+        let test_case: Vec<&[u8]> = vec![
+            b"*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n",
+            b"*2\r\n$4\r\nPING\r\n$5\r\nhello\r\n",
+        ];
+
+        for t in test_case {
+            let mut cur = Cursor::new(t);
+            assert!(Frame::check(&mut cur).is_ok());
+        }
+    }
+}

@@ -24,8 +24,9 @@ impl Context {
         if now {
             coarsetime::Instant::recent()
         } else {
-            // TODO: Have each thread update the coarsetime every 50ms so we
-            // avoid to call it manually each time, it will gain us some ns
+            // TODO: Have each thread update the coarsetime every Xms so we
+            // avoid to call it manually each time, it will goes from 5ns the
+            // first call to 1-2ns
             self.now.set(true);
             coarsetime::Instant::now()
         }

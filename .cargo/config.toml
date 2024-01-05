@@ -14,7 +14,7 @@ rustflags = [
 rustflags = [
     "-Zmacro-backtrace",
     "-Zdebug-macros",
-    "-Zthreads=10"
+    "-Zthreads=8"
 #   "-C",
 #   "link-arg=-fuse-ld=mold",
 #   "--cfg",
