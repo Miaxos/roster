@@ -16,7 +16,7 @@ bytes = "1"
 config = "0.13"
 derive_builder = "0.12"
 dotenv = "0.15"
-monoio = "0.2"
+monoio = { path = "../monoio/monoio/" }
 insta = { version = "1", features = ["yaml"] }
 serde = "1"
 tracing = "0.1"

@@ -1,6 +1,6 @@
 # roster
 
-> Replacement of Redis with Rust
+> Replacement of Redis with Rust & io-uring
 
 `roster` is an in-memory data store which is aiming to provide a fully
 comptabile redis APIs.

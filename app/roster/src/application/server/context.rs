@@ -19,6 +19,7 @@ impl Context {
         }
     }
 
+    #[inline]
     pub fn now(&self) -> Instant {
         let now = self.now.get();
         if now {

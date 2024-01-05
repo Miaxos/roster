@@ -7,14 +7,18 @@ rustflags = [
     "-Zdebug-macros", 
     "-Zthreads=4",
     "-C",
-    "link-arg=-fuse-ld=mold"
+    "link-arg=-fuse-ld=mold",
+    "-C",
+    "target-cpu=native"
 ]
 
 [target.aarch64-apple-darwin]
 rustflags = [
     "-Zmacro-backtrace",
     "-Zdebug-macros",
-    "-Zthreads=8"
+    "-Zthreads=8",
+    "-C",
+    "target-cpu=native"
 #   "-C",
 #   "link-arg=-fuse-ld=mold",
 #   "--cfg",

@@ -96,20 +96,11 @@ impl Connection {
     /// buffered data does not represent a valid frame, `Err` is returned.
     fn parse_frame(&mut self) -> anyhow::Result<Option<Frame>> {
         use frame::Error::Incomplete;
-
-        // Cursor is used to track the "current" location in the
-        // buffer. Cursor also implements `Buf` from the `bytes` crate
-        // which provides a number of helpful utilities for working
-        // with bytes.
         let mut buf = Cursor::new(&self.buffer[..]);
 
         // TODO: Change this because we do a lot of useless copy
-
-        // The first step is to check if enough data has been buffered to parse
-        // a single frame. This step is usually much faster than doing a full
-        // parse of the frame, and allows us to skip allocating data structures
-        // to hold the frame data unless we know the full frame has been
-        // received.
+        // We should to the check but prepare for a zero-copy deserialization
+        // into a frame.
         match Frame::check(&mut buf) {
             Ok(_) => {
                 // The `check` function will have advanced the cursor until the
@@ -216,7 +207,7 @@ impl Connection {
             Frame::Bulk(val) => {
                 let len = val.len();
 
-                self.stream_w.write(&[b'$']).await.0?;
+                self.stream_w.write([b'$'].as_slice()).await.0?;
                 self.write_decimal(len as u64).await?;
                 self.stream_w.write(val.slice(..)).await.0?;
                 self.stream_w.write(&[b'\r', b'\n']).await.0?;
@@ -242,11 +233,8 @@ impl Connection {
 
         let pos = buf.position() as usize;
 
-        self.stream_w
-            .write_all(buf.into_inner().slice(..pos))
-            .await
-            .0?;
-        self.stream_w.write_all(b"\r\n").await.0?;
+        self.stream_w.write(buf.into_inner().slice(..pos)).await.0?;
+        self.stream_w.write(b"\r\n").await.0?;
 
         Ok(())
     }

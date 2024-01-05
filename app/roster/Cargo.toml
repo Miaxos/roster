@@ -23,7 +23,7 @@ default = []
 
 [dependencies]
 anyhow.workspace = true
-atoi = "2"
+atoi_simd = "0.15"
 coarsetime = "0.1"
 bytes.workspace = true
 cfg-if = "1"
@@ -31,6 +31,7 @@ config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true
 monoio = { workspace = true, features = ["bytes", "sync"] }
+rkyv = { version = "0.7", features = ["alloc", "validation", "bytes"] }
 scc = "2"
 serde.workspace = true
 thiserror = "1"

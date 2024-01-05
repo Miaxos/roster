@@ -248,12 +248,12 @@ fn skip(src: &mut Cursor<&[u8]>, n: usize) -> Result<(), Error> {
 
 /// Read a new-line terminated decimal
 fn get_decimal(src: &mut Cursor<&[u8]>) -> Result<u64, Error> {
-    use atoi::atoi;
+    use atoi_simd::parse;
 
     let line = get_line(src)?;
 
-    atoi::<u64>(line)
-        .ok_or_else(|| "protocol error; invalid frame format".into())
+    parse::<u64>(line)
+        .map_err(|_| "protocol error; invalid frame format".into())
 }
 
 /// Find a line
