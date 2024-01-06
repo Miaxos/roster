@@ -12,7 +12,6 @@ use tracing::{error, info};
 mod connection;
 mod context;
 pub mod frame;
-pub mod frame_rkyv;
 mod handle;
 use handle::Handler;
 

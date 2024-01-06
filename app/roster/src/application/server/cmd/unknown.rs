@@ -1,3 +1,4 @@
+use bytestring::ByteString;
 use tracing::info;
 
 use super::CommandExecution;
@@ -27,10 +28,10 @@ impl CommandExecution for Unknown {
         dst: &mut Connection,
         ctx: Context,
     ) -> anyhow::Result<()> {
-        let response = Frame::Error(format!(
+        let response = Frame::Error(ByteString::from(format!(
             "ERR unknown command '{}'",
             self.command_name
-        ));
+        )));
 
         info!(?response);
 

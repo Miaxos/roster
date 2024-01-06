@@ -1,3 +1,4 @@
+use bytestring::ByteString;
 use tracing::info;
 
 use super::parse::Parse;
@@ -12,7 +13,7 @@ use crate::application::server::frame::Frame;
 #[derive(Debug, Default)]
 pub struct Get {
     /// the lookup key
-    key: String,
+    key: ByteString,
 }
 
 impl Get {

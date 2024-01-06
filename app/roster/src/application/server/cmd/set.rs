@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use bytes::Bytes;
+use bytestring::ByteString;
 use tracing::info;
 
 use super::parse::{Parse, ParseError};
@@ -42,7 +43,7 @@ use crate::domain::storage::SetOptions;
 #[derive(Debug, Default)]
 pub struct Set {
     /// the lookup key
-    key: String,
+    key: ByteString,
 
     /// the value to be stored
     value: Bytes,
@@ -52,37 +53,6 @@ pub struct Set {
 }
 
 impl Set {
-    /// Create a new `Set` command which sets `key` to `value`.
-    ///
-    /// If `expire` is `Some`, the value should expire after the specified
-    /// duration.
-    pub fn new(
-        key: impl ToString,
-        value: Bytes,
-        expire: Option<Duration>,
-    ) -> Set {
-        Set {
-            key: key.to_string(),
-            value,
-            expire,
-        }
-    }
-
-    /// Get the key
-    pub fn key(&self) -> &str {
-        &self.key
-    }
-
-    /// Get the value
-    pub fn value(&self) -> &Bytes {
-        &self.value
-    }
-
-    /// Get the expire
-    pub fn expire(&self) -> Option<Duration> {
-        self.expire
-    }
-
     /// Parse a `Set` instance from a received frame.
     ///
     /// The `Parse` argument provides a cursor-like API to read fields from the
@@ -162,7 +132,7 @@ impl CommandExecution for Set {
             .set_async(self.key, self.value, SetOptions { expired })
             .await
         {
-            Ok(_) => Frame::Simple("OK".to_string()),
+            Ok(_) => Frame::Simple(ByteString::from_static("OK")),
             Err(_) => Frame::Null,
         };
 

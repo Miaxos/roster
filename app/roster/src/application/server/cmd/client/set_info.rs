@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use bytes::Bytes;
+use bytestring::ByteString;
 
 use super::super::parse::{Parse, ParseError};
 use crate::application::server::connection::Connection;
@@ -113,7 +114,7 @@ impl ClientSetInfo {
 
             */
 
-        let response = Frame::Simple("OK".to_string());
+        let response = Frame::Simple(ByteString::from_static("OK"));
         dst.write_frame(&response).await?;
 
         Ok(())

@@ -1,6 +1,7 @@
 use std::{str, vec};
 
 use bytes::{Buf, Bytes};
+use bytestring::ByteString;
 
 use crate::application::server::frame::Frame;
 
@@ -62,7 +63,7 @@ impl Parse {
     ///
     /// If the next entry cannot be represented as a String, then an error is
     /// returned.
-    pub(crate) fn next_string(&mut self) -> Result<String, ParseError> {
+    pub(crate) fn next_string(&mut self) -> Result<ByteString, ParseError> {
         match self.next()? {
             // Both `Simple` and `Bulk` representation may be strings. Strings
             // are parsed to UTF-8.
@@ -70,13 +71,11 @@ impl Parse {
             // While errors are stored as strings, they are considered separate
             // types.
             Frame::Simple(s) => Ok(s),
-            Frame::Bulk(data) => {
-                String::from_utf8(data.to_vec()).map_err(|_| {
-                    ParseError::Other(anyhow::anyhow!(
-                        "protocol error; invalid string"
-                    ))
-                })
-            }
+            Frame::Bulk(data) => ByteString::try_from(data).map_err(|_| {
+                ParseError::Other(anyhow::anyhow!(
+                    "protocol error; invalid string"
+                ))
+            }),
             frame => Err(format!(
                 "protocol error; expected simple frame or bulk frame, got {:?}",
                 frame

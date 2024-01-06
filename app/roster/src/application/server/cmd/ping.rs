@@ -1,4 +1,5 @@
 use bytes::Bytes;
+use bytestring::ByteString;
 use tracing::info;
 
 use super::parse::{Parse, ParseError};
@@ -60,7 +61,7 @@ impl CommandExecution for Ping {
         ctx: Context,
     ) -> anyhow::Result<()> {
         let response = match self.msg {
-            None => Frame::Simple("PONG".to_string()),
+            None => Frame::Simple(ByteString::from_static("PONG")),
             Some(msg) => Frame::Bulk(msg),
         };
 

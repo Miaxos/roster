@@ -3,6 +3,7 @@
 use std::time::SystemTime;
 
 use bytes::Bytes;
+use bytestring::ByteString;
 use coarsetime::Instant;
 use scc::HashMap;
 
@@ -18,7 +19,7 @@ pub struct StorageValue {
 /// Storage
 #[derive(Default, Debug)]
 pub struct Storage {
-    db: HashMap<String, StorageValue>,
+    db: HashMap<ByteString, StorageValue>,
 }
 
 #[derive(Default)]
@@ -30,7 +31,7 @@ impl Storage {
     /// Set a key
     pub async fn set_async(
         &self,
-        key: String,
+        key: ByteString,
         val: Bytes,
         opt: SetOptions,
     ) -> Result<Option<StorageValue>, (String, StorageValue)> {
@@ -54,7 +55,11 @@ impl Storage {
     /// Get a key
     ///
     /// Return None if it doesn't exist
-    pub async fn get_async(&self, key: String, now: Instant) -> Option<Bytes> {
+    pub async fn get_async(
+        &self,
+        key: ByteString,
+        now: Instant,
+    ) -> Option<Bytes> {
         match self.db.entry_async(key).await {
             scc::hash_map::Entry::Occupied(oqp) => {
                 let val = oqp.get();
