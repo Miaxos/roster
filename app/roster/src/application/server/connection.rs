@@ -9,6 +9,7 @@ use monoio::io::{
 use monoio::net::TcpStream;
 
 use super::frame::{self, Frame};
+use super::frame_rkyv::FrameNew;
 
 /// Send and receive `Frame` values from a remote peer.
 ///
@@ -87,6 +88,69 @@ impl Connection {
                     return Err(anyhow::anyhow!("connection reset by peer"));
                 }
             }
+        }
+    }
+
+    fn parse_frame_new(&mut self) -> anyhow::Result<Option<FrameNew>> {
+        use super::frame_rkyv::Error::Incomplete;
+
+        let mut buf = Cursor::new(&self.buffer);
+
+        // TODO: Change this because we do a lot of useless copy
+        // We should to the check but prepare for a zero-copy deserialization
+        // into a frame.
+        match FrameNew::check(&mut buf) {
+            Ok(_) => {
+                // The `check` function will have advanced the cursor until the
+                // end of the frame. Since the cursor had position set to zero
+                // before `Frame::check` was called, we obtain the length of the
+                // frame by checking the cursor position.
+                let len = buf.position() as usize;
+
+                let mut buf = Cursor::new(self.buffer.split().freeze());
+                // Reset the position to zero before passing the cursor to
+                // `Frame::parse`.
+                buf.set_position(0);
+
+                // Parse the frame from the buffer. This allocates the necessary
+                // structures to represent the frame and returns the frame
+                // value.
+                //
+                // If the encoded frame representation is invalid, an error is
+                // returned. This should terminate the **current** connection
+                // but should not impact any other connected client.
+                let frame = FrameNew::parse(&mut buf)?;
+
+                // Discard the parsed data from the read buffer.
+                //
+                // When `advance` is called on the read buffer, all of the data
+                // up to `len` is discarded. The details of how this works is
+                // left to `BytesMut`. This is often done by moving an internal
+                // cursor, but it may be done by reallocating and copying data.
+                // self.buffer.advance(len);
+                // self.buffer.reserve(4 * 1024);
+
+                // Return the parsed frame to the caller.
+                Ok(Some(frame))
+            }
+            // There is not enough data present in the read buffer to parse a
+            // single frame. We must wait for more data to be received from the
+            // socket. Reading from the socket will be done in the statement
+            // after this `match`.
+            //
+            // We do not want to return `Err` from here as this "error" is an
+            // expected runtime condition.
+            Err(Incomplete) => {
+                /*
+                BytesMut::from(value)
+                self.buffer.unsplit(temp_b);
+                */
+                Ok(None)
+            }
+            // An error was encountered while parsing the frame. The connection
+            // is now in an invalid state. Returning `Err` from here will result
+            // in the connection being closed.
+            Err(e) => Err(e.into()),
         }
     }
 

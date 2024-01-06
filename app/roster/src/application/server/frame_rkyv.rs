@@ -1,352 +1,328 @@
+//! Provides a type representing a Redis protocol frame as well as utilities for
+//! parsing frames from a byte array.
+
 use std::convert::TryInto;
 use std::fmt;
 use std::io::Cursor;
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 
-use bytes::{Buf, Bytes};
-use rkyv::{Archive, Deserialize, Serialize};
+use bytes::{Buf, Bytes, BytesMut};
+use bytestring::ByteString;
+use monoio::buf::{IoBuf, Slice};
 
-#[derive(Debug)]
-pub enum FrameRkyv {
-    Simple(String),
-    Error(String),
+/// A frame in the Redis protocol.
+#[derive(Clone, Debug)]
+pub enum FrameNew {
+    Simple(ByteString),
+    Error(ByteString),
     Integer(u64),
     Bulk(Bytes),
     Null,
-    Array(Vec<FrameRkyv>),
+    Array(Vec<FrameNew>),
 }
 
-// ========================================
-// Recursive expansion of the Archive macro
-// ========================================
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    /// Not enough data is available to parse a message
+    #[error("ended early")]
+    Incomplete,
 
-#[automatically_derived]
-///An archived [`FrameRkyv`]
-#[derive(::rkyv::bytecheck::CheckBytes)]
-#[check_bytes(crate = "::rkyv::bytecheck")]
-#[check_bytes(bound = "__C: rkyv::validation::ArchiveContext, <__C as \
-                       rkyv::Fallible>::Error: std::error::Error")]
-#[repr(u8)]
-pub enum ArchivedFrameRkyv
-where
-    String: ::rkyv::Archive,
-    String: ::rkyv::Archive,
-    u64: ::rkyv::Archive,
-    Bytes: ::rkyv::Archive,
-{
-    ///The archived counterpart of [`FrameRkyv::Simple`]
-    #[allow(dead_code)]
-    Simple(
-        ///The archived counterpart of [`FrameRkyv::Simple::0`]
-        ::rkyv::Archived<String>,
-    ),
-    ///The archived counterpart of [`FrameRkyv::Error`]
-    #[allow(dead_code)]
-    Error(
-        ///The archived counterpart of [`FrameRkyv::Error::0`]
-        ::rkyv::Archived<String>,
-    ),
-    ///The archived counterpart of [`FrameRkyv::Integer`]
-    #[allow(dead_code)]
-    Integer(
-        ///The archived counterpart of [`FrameRkyv::Integer::0`]
-        ::rkyv::Archived<u64>,
-    ),
-    ///The archived counterpart of [`FrameRkyv::Bulk`]
-    #[allow(dead_code)]
-    Bulk(
-        ///The archived counterpart of [`FrameRkyv::Bulk::0`]
-        ::rkyv::Archived<Bytes>,
-    ),
-    ///The archived counterpart of [`FrameRkyv::Null`]
-    #[allow(dead_code)]
-    Null,
-    ///The archived counterpart of [`FrameRkyv::Array`]
-    #[allow(dead_code)]
-    Array(
-        ///The archived counterpart of [`FrameRkyv::Array::0`]
-        #[omit_bounds]
-        ::rkyv::Archived<Vec<FrameRkyv>>,
-    ),
+    /// Invalid message encoding
+    #[error("Invalid message encoding: {0}")]
+    Other(#[from] anyhow::Error),
 }
-#[automatically_derived]
-///The resolver for an archived [`FrameRkyv`]
-pub enum FrameRkyvResolver
-where
-    String: ::rkyv::Archive,
-    String: ::rkyv::Archive,
-    u64: ::rkyv::Archive,
-    Bytes: ::rkyv::Archive,
-{
-    ///The resolver for [`FrameRkyv::Simple`]
-    #[allow(dead_code)]
-    Simple(
-        ///The resolver for [`FrameRkyv::Simple::0`]
-        ::rkyv::Resolver<String>,
-    ),
-    ///The resolver for [`FrameRkyv::Error`]
-    #[allow(dead_code)]
-    Error(
-        ///The resolver for [`FrameRkyv::Error::0`]
-        ::rkyv::Resolver<String>,
-    ),
-    ///The resolver for [`FrameRkyv::Integer`]
-    #[allow(dead_code)]
-    Integer(
-        ///The resolver for [`FrameRkyv::Integer::0`]
-        ::rkyv::Resolver<u64>,
-    ),
-    ///The resolver for [`FrameRkyv::Bulk`]
-    #[allow(dead_code)]
-    Bulk(
-        ///The resolver for [`FrameRkyv::Bulk::0`]
-        ::rkyv::Resolver<Bytes>,
-    ),
-    ///The resolver for [`FrameRkyv::Null`]
-    #[allow(dead_code)]
-    Null,
-    ///The resolver for [`FrameRkyv::Array`]
-    #[allow(dead_code)]
-    Array(
-        ///The resolver for [`FrameRkyv::Array::0`]
-        ::rkyv::Resolver<Vec<FrameRkyv>>,
-    ),
-}
-#[automatically_derived]
-const _: () = {
-    use ::core::marker::PhantomData;
-    use ::rkyv::{out_field, Archive, Archived};
-    #[repr(u8)]
-    enum ArchivedTag {
-        Simple = b'+',
-        Error,
-        Integer,
-        Bulk,
-        Null,
-        Array,
-    }
-    #[repr(C)]
-    struct ArchivedVariantSimple(
-        ArchivedTag,
-        Archived<String>,
-        PhantomData<FrameRkyv>,
-    )
-    where
-        String: ::rkyv::Archive,
-        String: ::rkyv::Archive,
-        u64: ::rkyv::Archive,
-        Bytes: ::rkyv::Archive;
-    #[repr(C)]
-    struct ArchivedVariantError(
-        ArchivedTag,
-        Archived<String>,
-        PhantomData<FrameRkyv>,
-    )
-    where
-        String: ::rkyv::Archive,
-        String: ::rkyv::Archive,
-        u64: ::rkyv::Archive,
-        Bytes: ::rkyv::Archive;
-    #[repr(C)]
-    struct ArchivedVariantInteger(
-        ArchivedTag,
-        Archived<u64>,
-        PhantomData<FrameRkyv>,
-    )
-    where
-        String: ::rkyv::Archive,
-        String: ::rkyv::Archive,
-        u64: ::rkyv::Archive,
-        Bytes: ::rkyv::Archive;
-    #[repr(C)]
-    struct ArchivedVariantBulk(
-        ArchivedTag,
-        Archived<Bytes>,
-        PhantomData<FrameRkyv>,
-    )
-    where
-        String: ::rkyv::Archive,
-        String: ::rkyv::Archive,
-        u64: ::rkyv::Archive,
-        Bytes: ::rkyv::Archive;
-    #[repr(C)]
-    struct ArchivedVariantArray(
-        ArchivedTag,
-        Archived<Vec<FrameRkyv>>,
-        PhantomData<FrameRkyv>,
-    )
-    where
-        String: ::rkyv::Archive,
-        String: ::rkyv::Archive,
-        u64: ::rkyv::Archive,
-        Bytes: ::rkyv::Archive;
-    impl Archive for FrameRkyv
-    where
-        String: ::rkyv::Archive,
-        String: ::rkyv::Archive,
-        u64: ::rkyv::Archive,
-        Bytes: ::rkyv::Archive,
-    {
-        type Archived = ArchivedFrameRkyv;
-        type Resolver = FrameRkyvResolver;
-        #[allow(clippy::unit_arg)]
-        #[inline]
-        unsafe fn resolve(
-            &self,
-            pos: usize,
-            resolver: <Self as Archive>::Resolver,
-            out: *mut <Self as Archive>::Archived,
-        ) {
-            match resolver {
-                FrameRkyvResolver::Simple(resolver_0) => match self {
-                    FrameRkyv::Simple(self_0) => {
-                        dbg!(&self_0);
-                        let out = out.cast::<ArchivedVariantSimple>();
-                        ::core::ptr::addr_of_mut!((*out).0)
-                            .write(ArchivedTag::Simple);
-                        let (fp, fo) = out_field!(out.1);
-                        ::rkyv::Archive::resolve(
-                            self_0,
-                            pos + fp,
-                            resolver_0,
-                            fo,
-                        );
-                    }
-                    #[allow(unreachable_patterns)]
-                    _ => ::core::hint::unreachable_unchecked(),
-                },
-                FrameRkyvResolver::Error(resolver_0) => match self {
-                    FrameRkyv::Error(self_0) => {
-                        let out = out.cast::<ArchivedVariantError>();
-                        ::core::ptr::addr_of_mut!((*out).0)
-                            .write(ArchivedTag::Error);
-                        let (fp, fo) = out_field!(out.1);
-                        ::rkyv::Archive::resolve(
-                            self_0,
-                            pos + fp,
-                            resolver_0,
-                            fo,
-                        );
-                    }
-                    #[allow(unreachable_patterns)]
-                    _ => ::core::hint::unreachable_unchecked(),
-                },
-                FrameRkyvResolver::Integer(resolver_0) => match self {
-                    FrameRkyv::Integer(self_0) => {
-                        let out = out.cast::<ArchivedVariantInteger>();
-                        ::core::ptr::addr_of_mut!((*out).0)
-                            .write(ArchivedTag::Integer);
-                        let (fp, fo) = out_field!(out.1);
-                        ::rkyv::Archive::resolve(
-                            self_0,
-                            pos + fp,
-                            resolver_0,
-                            fo,
-                        );
-                    }
-                    #[allow(unreachable_patterns)]
-                    _ => ::core::hint::unreachable_unchecked(),
-                },
-                FrameRkyvResolver::Bulk(resolver_0) => match self {
-                    FrameRkyv::Bulk(self_0) => {
-                        let out = out.cast::<ArchivedVariantBulk>();
-                        ::core::ptr::addr_of_mut!((*out).0)
-                            .write(ArchivedTag::Bulk);
-                        let (fp, fo) = out_field!(out.1);
-                        ::rkyv::Archive::resolve(
-                            self_0,
-                            pos + fp,
-                            resolver_0,
-                            fo,
-                        );
-                    }
-                    #[allow(unreachable_patterns)]
-                    _ => ::core::hint::unreachable_unchecked(),
-                },
-                FrameRkyvResolver::Null => {
-                    out.cast::<ArchivedTag>().write(ArchivedTag::Null);
-                }
-                FrameRkyvResolver::Array(resolver_0) => match self {
-                    FrameRkyv::Array(self_0) => {
-                        let out = out.cast::<ArchivedVariantArray>();
-                        ::core::ptr::addr_of_mut!((*out).0)
-                            .write(ArchivedTag::Array);
-                        let (fp, fo) = out_field!(out.1);
-                        ::rkyv::Archive::resolve(
-                            self_0,
-                            pos + fp,
-                            resolver_0,
-                            fo,
-                        );
-                    }
-                    #[allow(unreachable_patterns)]
-                    _ => ::core::hint::unreachable_unchecked(),
-                },
+
+impl FrameNew {
+    /// Checks if an entire message can be decoded from `src`
+    pub fn check(src: &mut Cursor<&BytesMut>) -> Result<(), Error> {
+        match get_u8_mut(src)? {
+            b'+' => {
+                get_line_mut_no_return(src)?;
+                Ok(())
             }
-        }
-    }
-};
+            b'-' => {
+                get_line_mut_no_return(src)?;
+                Ok(())
+            }
+            b':' => {
+                let _ = get_decimal_mut(src)?;
+                Ok(())
+            }
+            b'$' => {
+                if b'-' == peek_u8_mut(src)? {
+                    // Skip '-1\r\n'
+                    skip_mut(src, 4)
+                } else {
+                    // Read the bulk string
+                    let len: usize = get_decimal_mut(src)?.try_into()?;
 
-const _: () = {
-    use ::rkyv::{Archive, Fallible, Serialize};
-    impl<__S: Fallible + ?Sized> Serialize<__S> for FrameRkyv
-    where
-        __S: rkyv::ser::ScratchSpace + rkyv::ser::Serializer,
-        String: Serialize<__S>,
-        String: Serialize<__S>,
-        u64: Serialize<__S>,
-        Bytes: Serialize<__S>,
-    {
-        #[inline]
-        fn serialize(
-            &self,
-            serializer: &mut __S,
-        ) -> ::core::result::Result<<Self as Archive>::Resolver, __S::Error>
-        {
-            dbg!(&self);
-            Ok(match self {
-                Self::Simple(_0) => FrameRkyvResolver::Simple(
-                    Serialize::<__S>::serialize(_0, serializer)?,
-                ),
-                Self::Error(_0) => FrameRkyvResolver::Error(
-                    Serialize::<__S>::serialize(_0, serializer)?,
-                ),
-                Self::Integer(_0) => {
-                    FrameRkyvResolver::Integer(Serialize::<__S>::serialize(
-                        _0, serializer,
-                    )?)
+                    // skip that number of bytes + 2 (\r\n).
+                    skip_mut(src, len + 2)
                 }
-                Self::Bulk(_0) => FrameRkyvResolver::Bulk(
-                    Serialize::<__S>::serialize(_0, serializer)?,
-                ),
-                Self::Null => FrameRkyvResolver::Null,
-                Self::Array(_0) => FrameRkyvResolver::Array(
-                    Serialize::<__S>::serialize(_0, serializer)?,
-                ),
-            })
+            }
+            b'*' => {
+                let len = get_decimal_mut(src)?;
+
+                for _ in 0..len {
+                    FrameNew::check(src)?;
+                }
+
+                Ok(())
+            }
+            actual => Err(format!(
+                "protocol error; invalid frame type byte `{}`",
+                actual
+            )
+            .into()),
         }
     }
-};
+
+    /// The message has already been validated with `check`.
+    pub fn parse(src: &mut Cursor<Bytes>) -> Result<FrameNew, Error> {
+        match get_u8(src)? {
+            b'+' => {
+                // Read the line and convert it to `Vec<u8>`
+                let line = get_line(src)?;
+                let string = ByteString::try_from(line).unwrap();
+
+                Ok(FrameNew::Simple(string))
+            }
+            b'-' => {
+                // Read the line and convert it to `Vec<u8>`
+                let line = get_line(src)?;
+                let string = ByteString::try_from(line).unwrap();
+
+                Ok(FrameNew::Error(string))
+            }
+            b':' => {
+                let len = get_decimal(src)?;
+                Ok(FrameNew::Integer(len))
+            }
+            b'$' => {
+                if b'-' == peek_u8(src)? {
+                    let line = get_line(src)?;
+
+                    if &line != b"-1".as_slice() {
+                        return Err(
+                            "protocol error; invalid frame format".into()
+                        );
+                    }
+
+                    Ok(FrameNew::Null)
+                } else {
+                    // Read the bulk string
+                    let len: usize = get_decimal(src)?.try_into()?;
+                    let n = len + 2;
+
+                    if src.remaining() < n {
+                        return Err(Error::Incomplete);
+                    }
+
+                    let pos = src.position() as usize;
+                    let len = pos + len;
+                    let data = src.get_ref().slice(pos..len);
+
+                    // skip that number of bytes + 2 (\r\n).
+                    skip(src, n)?;
+
+                    Ok(FrameNew::Bulk(data))
+                }
+            }
+            b'*' => {
+                let len = get_decimal(src)?.try_into()?;
+                let mut out = Vec::with_capacity(len);
+
+                for _ in 0..len {
+                    out.push(FrameNew::parse(src)?);
+                }
+
+                Ok(FrameNew::Array(out))
+            }
+            _ => unimplemented!(),
+        }
+    }
+}
+
+fn peek_u8(src: &mut Cursor<Bytes>) -> Result<u8, Error> {
+    if !src.has_remaining() {
+        return Err(Error::Incomplete);
+    }
+
+    Ok(src.chunk()[0])
+}
+
+fn peek_u8_mut(src: &mut Cursor<&BytesMut>) -> Result<u8, Error> {
+    if !src.has_remaining() {
+        return Err(Error::Incomplete);
+    }
+
+    Ok(src.chunk()[0])
+}
+
+fn get_u8(src: &mut Cursor<Bytes>) -> Result<u8, Error> {
+    if !src.has_remaining() {
+        return Err(Error::Incomplete);
+    }
+
+    Ok(src.get_u8())
+}
+
+fn get_u8_mut(src: &mut Cursor<&BytesMut>) -> Result<u8, Error> {
+    if !src.has_remaining() {
+        return Err(Error::Incomplete);
+    }
+
+    Ok(src.get_u8())
+}
+
+fn skip(src: &mut Cursor<Bytes>, n: usize) -> Result<(), Error> {
+    if src.remaining() < n {
+        return Err(Error::Incomplete);
+    }
+
+    src.advance(n);
+    Ok(())
+}
+
+fn skip_mut(src: &mut Cursor<&BytesMut>, n: usize) -> Result<(), Error> {
+    if src.remaining() < n {
+        return Err(Error::Incomplete);
+    }
+
+    src.advance(n);
+    Ok(())
+}
+
+/// Read a new-line terminated decimal
+#[inline]
+fn get_decimal(src: &mut Cursor<Bytes>) -> Result<u64, Error> {
+    use atoi_simd::parse;
+
+    let line = get_line(src)?;
+
+    parse::<u64>(&line)
+        .map_err(|_| "protocol error; invalid frame format".into())
+}
+
+/// Read a new-line terminated decimal
+#[inline]
+fn get_decimal_mut(src: &mut Cursor<&BytesMut>) -> Result<u64, Error> {
+    use atoi_simd::parse;
+
+    let range = get_line_mut(src)?;
+
+    let line = &src.get_ref().as_ref()[range];
+
+    parse::<u64>(line)
+        .map_err(|_| "protocol error; invalid frame format".into())
+}
+
+/// Find a line
+#[inline]
+fn get_line<'a>(src: &mut Cursor<Bytes>) -> Result<Bytes, Error> {
+    // Scan the bytes directly
+    let start = src.position() as usize;
+    // Scan to the second to last byte
+    let end = src.get_ref().len() - 1;
+
+    for i in start..end {
+        if src.get_ref()[i] == b'\r' && src.get_ref()[i + 1] == b'\n' {
+            // We found a line, update the position to be *after* the \n
+            src.set_position((i + 2) as u64);
+
+            // Return the line
+            return Ok(src.get_ref().slice(start..i));
+        }
+    }
+
+    Err(Error::Incomplete)
+}
+
+#[inline]
+fn get_line_mut_no_return<'a>(
+    src: &mut Cursor<&BytesMut>,
+) -> Result<(), Error> {
+    // Scan the bytes directly
+    let start = src.position() as usize;
+    // Scan to the second to last byte
+    let end = src.get_ref().len() - 1;
+
+    for i in start..end {
+        if src.get_ref()[i] == b'\r' && src.get_ref()[i + 1] == b'\n' {
+            // We found a line, update the position to be *after* the \n
+            src.set_position((i + 2) as u64);
+            return Ok(());
+        }
+    }
+
+    Err(Error::Incomplete)
+}
+
+#[inline]
+fn get_line_mut<'a>(
+    src: &'a mut Cursor<&BytesMut>,
+) -> Result<std::ops::Range<usize>, Error> {
+    // Scan the bytes directly
+    let start = src.position() as usize;
+    // Scan to the second to last byte
+    let end = src.get_ref().len() - 1;
+
+    for i in start..end {
+        if src.get_ref()[i] == b'\r' && src.get_ref()[i + 1] == b'\n' {
+            // We found a line, update the position to be *after* the \n
+            src.set_position((i + 2) as u64);
+
+            return Ok(start..i);
+        }
+    }
+
+    Err(Error::Incomplete)
+}
+
+impl From<String> for Error {
+    fn from(src: String) -> Error {
+        Error::Other(anyhow::anyhow!(src))
+    }
+}
+
+impl From<&str> for Error {
+    fn from(src: &str) -> Error {
+        src.to_string().into()
+    }
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(_src: FromUtf8Error) -> Error {
+        "protocol error; invalid frame format".into()
+    }
+}
+
+impl From<TryFromIntError> for Error {
+    fn from(_src: TryFromIntError) -> Error {
+        "protocol error; invalid frame format".into()
+    }
+}
 
 #[cfg(test)]
-mod test {
-    use rkyv::check_archived_root;
+mod tests {
+    use std::io::Cursor;
 
-    use super::FrameRkyv;
+    use bytes::BytesMut;
+
+    use super::FrameNew;
 
     #[test]
-    fn test_rkyv() {
-        let f = FrameRkyv::Simple("PONG".to_string());
-        let buf = rkyv::to_bytes::<_, 1024>(&f).unwrap();
+    fn test_simple_frame() {
+        let test_case: Vec<&[u8]> = vec![
+            b"*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n",
+            b"*2\r\n$4\r\nPING\r\n$5\r\nhello\r\n",
+        ];
 
-        let a = buf.to_vec();
-        let b = String::from_utf8(a.clone()).unwrap();
-        dbg!(&b);
-        // assert_eq!(b, "+PONG");
-
-        let ping_test = b"+OK\r\n";
-        let a = check_archived_root::<FrameRkyv>(a.as_slice());
-        a.unwrap();
+        for t in test_case {
+            let b = BytesMut::from(t);
+            let mut cur = Cursor::new(&b);
+            assert!(FrameNew::check(&mut cur).is_ok());
+        }
     }
 }
