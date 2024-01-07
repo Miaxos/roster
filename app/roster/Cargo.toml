@@ -1,6 +1,6 @@
 [package]
 name = "roster"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Replacement of Redis with Rust"
 authors = ["Anthony Griffon <anthony@griffon.one>"]
