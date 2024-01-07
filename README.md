@@ -1,5 +1,9 @@
 # roster
 
+<p align="center">
+    <img src="./docs/logo.svg" height="128" width="128" alt="A rooster in minimalist style with rainbow colours generated via StableDiffusion">
+</p>
+
 > Replacement of Redis with Rust & io-uring
 
 [![release](https://github.com/Miaxos/roster/actions/workflows/release.yml/badge.svg)](https://github.com/Miaxos/roster/actions/workflows/release.yml)
@@ -18,6 +22,10 @@ initial code involving the resp protocol comes from `mini-redis`.
 Only the RESP3 is wanted for now.
 
 ## Architecture
+
+### Performance
+
+
 
 ### Shared nothing architecture
 
