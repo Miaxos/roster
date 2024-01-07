@@ -4,7 +4,7 @@ use bytes::Bytes;
 use bytestring::ByteString;
 
 use super::super::parse::{Parse, ParseError};
-use crate::application::server::connection::Connection;
+use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
@@ -97,7 +97,7 @@ impl ClientSetInfo {
     /// to execute a received command.
     pub(crate) async fn apply(
         self,
-        dst: &mut Connection,
+        dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
         monoio::time::sleep(Duration::from_secs(3)).await;

@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use bytes::{Buf, Bytes, BytesMut};
+use bytes::{Bytes, BytesMut};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use pprof::criterion::{Output, PProfProfiler};
 use roster::application::server::frame::Frame;

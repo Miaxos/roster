@@ -20,7 +20,7 @@ use handle::Handler;
 
 mod cmd;
 
-use crate::application::server::connection::Connection;
+use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::domain;
 
@@ -92,7 +92,7 @@ impl ServerConfig {
 
                         let _spawned = monoio::spawn(async move {
                             let (connection, r) =
-                                Connection::new(conn, 4 * 1024);
+                                WriteConnection::new(conn, 4 * 1024);
 
                             let mut handler = Handler {
                                 connection,

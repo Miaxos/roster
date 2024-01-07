@@ -1,0 +1,17 @@
+[workspace]
+allow_dirty = false
+changelog_update = true
+dependencies_update = true
+git_release_enable = false
+pr_labels = ["release"]
+publish_allow_dirty = false
+semver_check = true
+publish_timeout = "10m"
+
+[[package]]
+name = "roster"
+changelog_include = []
+changelog_path = "CHANGELOG.md"
+changelog_update = true
+git_release_enable = false
+publish = true

@@ -2,7 +2,7 @@ use super::parse::Parse;
 use super::CommandExecution;
 use crate::application::server::cmd::unknown::Unknown;
 use crate::application::server::cmd::{Command, SubcommandRegistry};
-use crate::application::server::connection::Connection;
+use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 
 mod set_info;
@@ -44,7 +44,7 @@ impl SubcommandRegistry for Client {
 impl CommandExecution for Client {
     async fn apply(
         self,
-        dst: &mut Connection,
+        dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
         match self {

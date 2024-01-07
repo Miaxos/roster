@@ -1,10 +1,10 @@
 use std::io::{self, Cursor};
 
-use bytes::{Buf, Bytes, BytesMut};
+use bytes::BytesMut;
 use monoio::buf::IoBuf;
 use monoio::io::{
-    AsyncBufReadExt, AsyncReadRent, AsyncWriteRent, AsyncWriteRentExt,
-    BufReader, BufWriter, OwnedReadHalf, OwnedWriteHalf, Splitable,
+    AsyncReadRent, AsyncWriteRent, BufReader, BufWriter, OwnedReadHalf,
+    OwnedWriteHalf, Splitable,
 };
 use monoio::net::TcpStream;
 
@@ -22,7 +22,7 @@ use super::frame::{self, Frame};
 ///
 /// When sending frames, the frame is first encoded into the write buffer.
 /// The contents of the write buffer are then written to the socket.
-pub struct Connection {
+pub struct WriteConnection {
     // The `TcpStream`. It is decorated with a `BufWriter`, which provides
     // write level buffering.
     stream_w: BufWriter<OwnedWriteHalf<TcpStream>>,
@@ -137,17 +137,17 @@ impl ReadConnection {
     }
 }
 
-impl Connection {
+impl WriteConnection {
     /// Create a new `Connection`, backed by `socket`. Read and write buffers
     /// are initialized.
     pub fn new(
         socket: TcpStream,
         buf_size: usize,
-    ) -> (Connection, ReadConnection) {
+    ) -> (WriteConnection, ReadConnection) {
         let (read, write) = socket.into_split();
 
         (
-            Connection {
+            WriteConnection {
                 stream_w: BufWriter::new(write),
             },
             ReadConnection {
@@ -242,10 +242,6 @@ impl Connection {
         self.stream_w.write(buf.into_inner().slice(..pos)).await.0?;
         self.stream_w.write(b"\r\n").await.0?;
 
-        Ok(())
-    }
-
-    pub async fn stop(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
 }

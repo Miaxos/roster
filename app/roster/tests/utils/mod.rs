@@ -1,10 +1,10 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{SocketAddr};
 use std::str::FromStr;
-use std::sync::Arc;
 
-use roster::ServerConfigBuilder;
+
+
 mod port_picker;
-use port_picker::pick_unused_port;
+
 
 /// Start a simple Roster server
 pub fn start_simple_server() -> SocketAddr {

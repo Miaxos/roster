@@ -2,7 +2,7 @@ use bytestring::ByteString;
 use tracing::info;
 
 use super::CommandExecution;
-use crate::application::server::connection::Connection;
+use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
@@ -25,7 +25,7 @@ impl Unknown {
 impl CommandExecution for Unknown {
     async fn apply(
         self,
-        dst: &mut Connection,
+        dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
         let response = Frame::Error(ByteString::from(format!(

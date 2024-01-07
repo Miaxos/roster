@@ -4,7 +4,7 @@ use self::parse::Parse;
 use self::ping::Ping;
 use self::set::Set;
 use self::unknown::Unknown;
-use super::connection::Connection;
+use super::connection::WriteConnection;
 use super::context::Context;
 use super::frame::Frame;
 
@@ -32,7 +32,7 @@ pub trait CommandExecution: Sized {
     /// Apply a command or a subcommand.
     async fn apply(
         self,
-        dst: &mut Connection,
+        dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()>;
 }
@@ -103,7 +103,7 @@ impl Command {
     /// to execute a received command.
     pub(crate) async fn apply(
         self,
-        dst: &mut Connection,
+        dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
         use Command::*;

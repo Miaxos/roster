@@ -16,8 +16,14 @@ Only the RESP3 is wanted for now.
 
 ### Shared nothing architecture
 
+#### Idea
 Each thread got his own shard of data to handle, it can be a replica of another
 thread or another server.
+
+#### Current implementation
+
+We use
+[scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap) behind an `Arc` for now while Sharding APIs are not implemented on [monoio](https://github.com/bytedance/monoio/issues/213).
 
 ### Thread per core
 "*The idea is to use every ressources avaiable on the hardware. To do that, we use

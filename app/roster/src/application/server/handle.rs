@@ -1,26 +1,17 @@
-use std::rc::Rc;
-
-use monoio::time::Instant;
-use scc::Queue;
-use tracing::info;
-
 use super::cmd::Command;
-use super::connection::{Connection, ReadConnection};
+use super::connection::{ReadConnection, WriteConnection};
 use super::context::Context;
-use super::frame::Frame;
 
 /// Per-connection handler. Reads requests from `connection` and applies the
 /// commands.
 pub struct Handler {
     /// The TCP connection decorated with the redis protocol encoder / decoder
     /// implemented using a buffered `TcpStream`.
-    pub connection: Connection,
+    pub connection: WriteConnection,
     pub connection_r: ReadConnection,
 }
 
 impl Handler {
-    /// Process a single connection.
-    ///
     /// Request frames are read from the socket and processed. Responses are
     /// written back to the socket.
     pub async fn run(self, ctx: Context) -> anyhow::Result<()> {
@@ -59,14 +50,10 @@ impl Handler {
                 // TODO: Sharding: here the command know if it's about a
                 // specific key, so we are able to do the
                 // sharding here.
-                //
+
                 // Connection is not Send, but if the data is not in the good
                 // thread, we still have to communicate the command and wait for
                 // the response
-
-                // TODO: Rework the apply because we do not have the initial
-                // connection but we should have a stream to the `stream_w`
-                // part.
                 cmd.apply(&mut connection, ctx.clone()).await?;
             }
             Ok::<_, anyhow::Error>(())
@@ -74,11 +61,9 @@ impl Handler {
 
         monoio::select! {
             r = accepting_frames_handle => {
-                // println!("operation timed out");
                 return r;
             }
             r = answer_in_order_handle => {
-                // println!("operation completed");
                 return r;
             }
         }

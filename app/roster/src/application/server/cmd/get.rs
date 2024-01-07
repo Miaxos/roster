@@ -3,7 +3,7 @@ use tracing::info;
 
 use super::parse::Parse;
 use super::CommandExecution;
-use crate::application::server::connection::Connection;
+use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
@@ -26,7 +26,7 @@ impl Get {
 impl CommandExecution for Get {
     async fn apply(
         self,
-        dst: &mut Connection,
+        dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
         let response = match ctx.storage.get_async(self.key, ctx.now()).await {

@@ -7,7 +7,7 @@ use tracing::info;
 
 use super::parse::{Parse, ParseError};
 use super::CommandExecution;
-use crate::application::server::connection::Connection;
+use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 use crate::domain::storage::SetOptions;
@@ -122,7 +122,7 @@ impl Set {
 impl CommandExecution for Set {
     async fn apply(
         self,
-        dst: &mut Connection,
+        dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
         /*
