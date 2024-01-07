@@ -2,14 +2,12 @@
 //! parsing frames from a byte array.
 
 use std::convert::TryInto;
-use std::fmt;
 use std::io::Cursor;
 use std::num::TryFromIntError;
 use std::string::FromUtf8Error;
 
 use bytes::{Buf, Bytes, BytesMut};
 use bytestring::ByteString;
-use monoio::buf::{IoBuf, Slice};
 
 /// A frame in the Redis protocol.
 #[derive(Clone, Debug)]
@@ -103,7 +101,7 @@ impl Frame {
                 if b'-' == peek_u8(src)? {
                     let line = get_line(src)?;
 
-                    if &line != b"-1".as_slice() {
+                    if line != b"-1".as_slice() {
                         return Err(
                             "protocol error; invalid frame format".into()
                         );
@@ -220,7 +218,7 @@ fn get_decimal_mut(src: &mut Cursor<&BytesMut>) -> Result<u64, Error> {
 
 /// Find a line
 #[inline]
-fn get_line<'a>(src: &mut Cursor<Bytes>) -> Result<Bytes, Error> {
+fn get_line(src: &mut Cursor<Bytes>) -> Result<Bytes, Error> {
     // Scan the bytes directly
     let start = src.position() as usize;
     // Scan to the second to last byte
@@ -240,9 +238,7 @@ fn get_line<'a>(src: &mut Cursor<Bytes>) -> Result<Bytes, Error> {
 }
 
 #[inline]
-fn get_line_mut_no_return<'a>(
-    src: &mut Cursor<&BytesMut>,
-) -> Result<(), Error> {
+fn get_line_mut_no_return(src: &mut Cursor<&BytesMut>) -> Result<(), Error> {
     // Scan the bytes directly
     let start = src.position() as usize;
     // Scan to the second to last byte
@@ -260,8 +256,8 @@ fn get_line_mut_no_return<'a>(
 }
 
 #[inline]
-fn get_line_mut<'a>(
-    src: &'a mut Cursor<&BytesMut>,
+fn get_line_mut(
+    src: &mut Cursor<&BytesMut>,
 ) -> Result<std::ops::Range<usize>, Error> {
     // Scan the bytes directly
     let start = src.position() as usize;

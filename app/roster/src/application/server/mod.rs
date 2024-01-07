@@ -1,16 +1,11 @@
 //! The whole redis server implementation is here.
 use std::net::SocketAddr;
-use std::os::fd::AsRawFd;
-use std::rc::Rc;
 use std::sync::atomic::AtomicU16;
 use std::sync::Arc;
 use std::thread::JoinHandle;
-use std::time::Duration;
 
 use derive_builder::Builder;
 use monoio::net::{ListenerConfig, TcpListener};
-use thread_priority::{set_current_thread_priority, ThreadPriorityValue};
-use tracing::{error, info};
 
 mod connection;
 mod context;
@@ -28,6 +23,7 @@ use crate::domain;
 #[builder(pattern = "owned", setter(into, strip_option))]
 pub struct ServerConfig {
     bind_addr: SocketAddr,
+    #[allow(dead_code)]
     connections_limit: Arc<AtomicU16>,
 }
 
@@ -94,7 +90,7 @@ impl ServerConfig {
                             let (connection, r) =
                                 WriteConnection::new(conn, 4 * 1024);
 
-                            let mut handler = Handler {
+                            let handler = Handler {
                                 connection,
                                 connection_r: r,
                             };

@@ -26,7 +26,7 @@ impl CommandExecution for Unknown {
     async fn apply(
         self,
         dst: &mut WriteConnection,
-        ctx: Context,
+        _ctx: Context,
     ) -> anyhow::Result<()> {
         let response = Frame::Error(ByteString::from(format!(
             "ERR unknown command '{}'",

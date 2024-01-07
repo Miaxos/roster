@@ -1,6 +1,6 @@
 use std::{str, vec};
 
-use bytes::{Buf, Bytes};
+use bytes::Bytes;
 use bytestring::ByteString;
 
 use crate::application::server::frame::Frame;
@@ -94,7 +94,7 @@ impl Parse {
             //
             // Although errors are stored as strings and could be represented as
             // raw bytes, they are considered separate types.
-            Frame::Simple(s) => Ok(Bytes::from(s.into_bytes())),
+            Frame::Simple(s) => Ok(s.into_bytes()),
             Frame::Bulk(data) => Ok(data),
             frame => Err(format!(
                 "protocol error; expected simple frame or bulk frame, got {:?}",

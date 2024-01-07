@@ -2,13 +2,12 @@
 
 use std::hash::BuildHasherDefault;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicU16, AtomicU32};
-use std::time::SystemTime;
+use std::sync::atomic::AtomicU32;
 
 use bytes::Bytes;
 use bytestring::ByteString;
 use coarsetime::Instant;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHasher;
 use scc::HashMap;
 
 // We disallow Send just to be sure
@@ -23,7 +22,7 @@ pub struct StorageValue {
 /// Storage
 #[derive(Default, Debug, Clone)]
 pub struct Storage {
-    db: Rc<HashMap<ByteString, StorageValue>>,
+    db: Rc<HashMap<ByteString, StorageValue, BuildHasherDefault<FxHasher>>>,
     count: Rc<AtomicU32>,
 }
 
@@ -43,8 +42,6 @@ impl Storage {
                 4096,
                 Default::default(),
             )),
-            // db: HashMap<ByteString, StorageValue,
-            // BuildHasherDefault<FxHasher>>,
             count: Rc::new(AtomicU32::new(0)),
         }
     }
@@ -76,39 +73,6 @@ impl Storage {
                 db.retain_async(|_, _| false).await;
                 count.swap(0, std::sync::atomic::Ordering::Relaxed);
             });
-        }
-
-        if let Err((key, val)) = self.db.insert(key, val) {
-            let old = self.db.update(&key, |_, _| val);
-            Ok(old)
-        } else {
-            Ok(None)
-        }
-    }
-
-    /// Set a key
-    pub fn set(
-        &self,
-        key: ByteString,
-        val: Bytes,
-        opt: SetOptions,
-    ) -> Result<Option<StorageValue>, (String, StorageValue)> {
-        let val = StorageValue {
-            expired: opt.expired,
-            val,
-        };
-
-        let old = self
-            .count
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        // Simulate some eviction mechanisme when we have too many keys
-        if old > 400_000 {
-            // dbg!("remove");
-            // TODO: If the RC is for the DB instead, we could have a spawn from
-            // monoio for this task instead, it would save us some
-            // time for the p99.9
-            self.db.retain(|_, _| false);
-            self.count.swap(0, std::sync::atomic::Ordering::Relaxed);
         }
 
         if let Err((key, val)) = self.db.insert(key, val) {

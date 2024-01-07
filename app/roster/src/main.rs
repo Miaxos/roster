@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use application::server::ServerConfigBuilder;
 use infrastructure::config::Cfg;
-use infrastructure::instruments::Instruments;
+// use infrastructure::instruments::Instruments;
 
 fn main() -> anyhow::Result<()> {
     // Initialize config

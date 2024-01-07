@@ -2,8 +2,6 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use bytestring::ByteString;
-use monoio::time::Instant;
-use tracing::info;
 
 use super::parse::{Parse, ParseError};
 use super::CommandExecution;
@@ -53,7 +51,7 @@ pub struct Set {
     expire: Option<Duration>,
 }
 
-const OK_STR: ByteString = ByteString::from_static("OK");
+static OK_STR: ByteString = ByteString::from_static("OK");
 
 impl Set {
     /// Parse a `Set` instance from a received frame.
@@ -125,13 +123,7 @@ impl CommandExecution for Set {
         dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
-        /*
-        let expired = match self.expire {
-            Some(dur) => Some(ctx.now() + dur.into()),
-            None => None,
-        };
-        */
-        let expired = None;
+        let expired = self.expire.map(|dur| ctx.now() + dur.into());
 
         // let now = Instant::now();
         let response = match ctx
@@ -139,7 +131,7 @@ impl CommandExecution for Set {
             .set_async(self.key, self.value, SetOptions { expired })
             .await
         {
-            Ok(_) => Frame::Simple(OK_STR),
+            Ok(_) => Frame::Simple(OK_STR.clone()),
             Err(_) => Frame::Null,
         };
         // let elapsed = now.elapsed();

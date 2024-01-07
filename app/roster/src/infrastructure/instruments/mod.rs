@@ -7,6 +7,7 @@ use tracing_subscriber::{self};
 #[must_use]
 pub struct Instruments {}
 
+#[allow(dead_code)]
 impl Instruments {
     /// Create a new `Instruments` stack and register it globally.
     pub fn new() -> anyhow::Result<Self> {

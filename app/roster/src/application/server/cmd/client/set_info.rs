@@ -27,7 +27,9 @@ use crate::application::server::frame::Frame;
 /// Note that these attributes are not cleared by the RESET command.
 #[derive(Debug, Default)]
 pub struct ClientSetInfo {
+    #[allow(dead_code)]
     lib_name: Option<Bytes>,
+    #[allow(dead_code)]
     lib_version: Option<Bytes>,
 }
 
@@ -98,7 +100,7 @@ impl ClientSetInfo {
     pub(crate) async fn apply(
         self,
         dst: &mut WriteConnection,
-        ctx: Context,
+        _ctx: Context,
     ) -> anyhow::Result<()> {
         monoio::time::sleep(Duration::from_secs(3)).await;
         /*

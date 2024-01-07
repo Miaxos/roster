@@ -61,10 +61,10 @@ impl Handler {
 
         monoio::select! {
             r = accepting_frames_handle => {
-                return r;
+                r
             }
             r = answer_in_order_handle => {
-                return r;
+                r
             }
         }
     }

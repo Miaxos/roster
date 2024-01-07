@@ -8,7 +8,7 @@ use monoio::io::{
 };
 use monoio::net::TcpStream;
 
-use super::frame::{self, Frame};
+use super::frame::Frame;
 
 /// Send and receive `Frame` values from a remote peer.
 ///
@@ -205,7 +205,7 @@ impl WriteConnection {
             }
             Frame::Integer(val) => {
                 self.stream_w.write(&[b':']).await.0?;
-                self.write_decimal(*val as u64).await?;
+                self.write_decimal(*val).await?;
             }
             Frame::Null => {
                 self.stream_w.write(b"$-1\r\n").await.0?;

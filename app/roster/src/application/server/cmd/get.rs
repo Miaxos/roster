@@ -1,5 +1,4 @@
 use bytestring::ByteString;
-use tracing::info;
 
 use super::parse::Parse;
 use super::CommandExecution;
