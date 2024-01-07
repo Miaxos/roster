@@ -143,8 +143,7 @@ jobs:
         fi
         set -x
 
-    - name: Run tests (with cross)
-      if: matrix.target != ''
+    - name: Run tests
       run: ${{ env.CARGO }} test --verbose --workspace ${{ env.TARGET_FLAGS }}
 
 #   - name: Test zsh shell completions (Unix, sans cross)
