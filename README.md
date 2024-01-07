@@ -1,7 +1,7 @@
 # roster
 
 <p align="center">
-    <img src="./docs/logo.svg" height="128" width="128" alt="A rooster in minimalist style with rainbow colours generated via StableDiffusion">
+    <img src="./docs/logo.png" height="128" width="128" alt="A rooster in minimalist style with rainbow colours generated via StableDiffusion">
 </p>
 
 > Replacement of Redis with Rust & io-uring
