@@ -17,39 +17,51 @@ comptabile redis APIs.
 It is more like an expirement right now on, feel free to contribute. Some of the
 initial code involving the resp protocol comes from `mini-redis`.
 
-## Redis RESP
+## Benchmarks
 
-Only the RESP3 is wanted for now.
+WIP
+
+## Protocol
+
+### Reddis
+
+- Only the RESP3 is wanted for now.
 
 ## Architecture
 
 ### Performance
 
+To be able to max out performances out of an application we must be able to have
+a linear-scalability.[^1] Usual issues around scalability are when you share
+data between threads, (like false-sharing[^3]). To solve this issue, we will use
+a shared-nothing architecture (right now we aren't due to some APIs not
+implemented yet) where each thread will own his own slice of the storage.
 
+We also use a runtime which is based on `io-uring` to handle every I/O on the
+application: [monoio](https://github.com/bytedance/monoio/).
 
-### Shared nothing architecture
+[^1]: It means if we have an application running 100 op/s on one thread, if we 
+add another one, we should be at 200 op/s. We have a linear scalability. (or
+a near linear scalability).
+[^3]: An excellent article explaining it: [alic.dev](https://alic.dev/blog/false-sharing).
 
-#### Idea
-Each thread got his own shard of data to handle, it can be a replica of another
-thread or another server.
+In the same spirit as a shared nothing architecture we use one thread per core
+to maximize ressources available on the hardware.
 
-#### Current implementation
-
-We use
-[scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap) behind an `Arc` for now while Sharding APIs are not implemented on [monoio](https://github.com/bytedance/monoio/issues/213).
-
-### Thread per core
-"*The idea is to use every ressources avaiable on the hardware. To do that, we use
-a shared-nothing architecture with a thread-per-core runtime (monoio).
-
-Application tail latency is critical for services to meet their latency 
+"*Application tail latency is critical for services to meet their latency 
 expectations. We have shown that the thread-per-core approach can reduce 
 application tail latency of a key-value store by up to 71% compared to baseline 
-Memcached running on commodity hardware and Linux.*"[^1]
+Memcached running on commodity hardware and Linux.*"[^2]
+
+[^2]: [The Impact of Thread-Per-Core Architecture on Application Tail Latency](https://helda.helsinki.fi/server/api/core/bitstreams/3142abaa-16e3-4ad0-beee-e62add589fc4/content)
+
+### Storage
+
+We use
+[scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap) behind an `Arc` for now while Sharding APIs are not implemented on [monoio](https://github.com/bytedance/monoio/issues/213) but as soon as we have a way to load-balance our TCP Connection to the proper thread, we should switch to a `scc::Hashmap` per thread.
 
 ## References
 
-[^1]: [The Impact of Thread-Per-Core Architecture on Application Tail Latency](https://helda.helsinki.fi/server/api/core/bitstreams/3142abaa-16e3-4ad0-beee-e62add589fc4/content)
 - [RESP3](https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md)
 - https://github.com/tair-opensource/compatibility-test-suite-for-redis
 - https://github.com/redis/redis-specifications
