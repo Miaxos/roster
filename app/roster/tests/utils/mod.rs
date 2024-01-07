@@ -1,10 +1,7 @@
-use std::net::{SocketAddr};
+use std::net::SocketAddr;
 use std::str::FromStr;
 
-
-
 mod port_picker;
-
 
 /// Start a simple Roster server
 pub fn start_simple_server() -> SocketAddr {
