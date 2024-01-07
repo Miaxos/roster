@@ -16,7 +16,7 @@ bytes = "1"
 config = "0.13"
 derive_builder = "0.12"
 dotenv = "0.15"
-monoio = { git = "https://github.com/bytedance/monoio.git", rev = "f684db16bd4e3b2303d5b7af1e18723aeb556d24" }
+monoio = "0.2"
 insta = { version = "1", features = ["yaml"] }
 serde = "1"
 tracing = "0.1"
