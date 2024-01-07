@@ -2,6 +2,11 @@
 
 > Replacement of Redis with Rust & io-uring
 
+[![release](https://github.com/Miaxos/roster/actions/workflows/release.yml/badge.svg)](https://github.com/Miaxos/roster/actions/workflows/release.yml)
+[![Crates.io version](https://img.shields.io/crates/v/roster.svg)](https://crates.io/crates/roster)
+[![dependency status](https://deps.rs/repo/github/miaxos/roster/status.svg)](https://deps.rs/repo/github/miaxos/roster)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/miaxos/roster/compare)
+
 `roster` is an in-memory data store which is aiming to provide a fully
 comptabile redis APIs.
 
