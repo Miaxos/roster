@@ -6,7 +6,7 @@ description = "Replacement of Redis with Rust"
 authors = ["Anthony Griffon <anthony@griffon.one>"]
 homepage = "https://swarmd.io"
 repository = "https://github.com/miaxos/roster"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 keywords = ["redis", "async", "io-uring"]
 
 [lib]
