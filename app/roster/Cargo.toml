@@ -41,14 +41,12 @@ serde.workspace = true
 thiserror = "1"
 thread-priority = "0.15"
 
-
-[target.'cfg(windows)'.dependencies]
-monoio = { workspace = true, features = ["bytes", "legacy"] }
-
-
 # Logging
 tracing = { workspace = true, features = ["attributes"] }
 tracing-subscriber = { workspace = true, features = ["registry", "env-filter", "json"] }
+
+[target.'cfg(windows)'.dependencies]
+monoio = { workspace = true, features = ["bytes", "legacy"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["async", "html_reports"] }
