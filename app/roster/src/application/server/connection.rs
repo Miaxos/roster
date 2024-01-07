@@ -23,28 +23,17 @@ use super::frame::{self, Frame};
 /// When sending frames, the frame is first encoded into the write buffer.
 /// The contents of the write buffer are then written to the socket.
 pub struct Connection {
-    pub stream_r: BufReader<OwnedReadHalf<TcpStream>>,
     // The `TcpStream`. It is decorated with a `BufWriter`, which provides
     // write level buffering.
     stream_w: BufWriter<OwnedWriteHalf<TcpStream>>,
+}
 
-    // The buffer for reading frames.
+pub struct ReadConnection {
+    pub stream_r: BufReader<OwnedReadHalf<TcpStream>>,
     buffer: BytesMut,
 }
 
-impl Connection {
-    /// Create a new `Connection`, backed by `socket`. Read and write buffers
-    /// are initialized.
-    pub fn new(socket: TcpStream, buf_size: usize) -> Connection {
-        let (read, write) = socket.into_split();
-
-        Connection {
-            stream_r: BufReader::new(read),
-            stream_w: BufWriter::new(write),
-            buffer: BytesMut::with_capacity(buf_size),
-        }
-    }
-
+impl ReadConnection {
     /// Read a single `Frame` value from the underlying stream.
     ///
     /// The function waits until it has retrieved enough data to parse a frame.
@@ -106,7 +95,7 @@ impl Connection {
                 // frame by checking the cursor position.
                 let len = buf.position() as usize;
 
-                let mut buf = Cursor::new(self.buffer.split().freeze());
+                let mut buf = Cursor::new(self.buffer.split_to(len).freeze());
                 // Reset the position to zero before passing the cursor to
                 // `Frame::parse`.
                 buf.set_position(0);
@@ -127,7 +116,7 @@ impl Connection {
                 // left to `BytesMut`. This is often done by moving an internal
                 // cursor, but it may be done by reallocating and copying data.
                 // self.buffer.advance(len);
-                // self.buffer.reserve(4 * 1024);
+                self.buffer.reserve(4 * 1024);
 
                 // Return the parsed frame to the caller.
                 Ok(Some(frame))
@@ -145,6 +134,27 @@ impl Connection {
             // in the connection being closed.
             Err(e) => Err(e.into()),
         }
+    }
+}
+
+impl Connection {
+    /// Create a new `Connection`, backed by `socket`. Read and write buffers
+    /// are initialized.
+    pub fn new(
+        socket: TcpStream,
+        buf_size: usize,
+    ) -> (Connection, ReadConnection) {
+        let (read, write) = socket.into_split();
+
+        (
+            Connection {
+                stream_w: BufWriter::new(write),
+            },
+            ReadConnection {
+                stream_r: BufReader::new(read),
+                buffer: BytesMut::with_capacity(buf_size),
+            },
+        )
     }
 
     /// Write a single `Frame` value to the underlying stream.

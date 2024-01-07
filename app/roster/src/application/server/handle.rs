@@ -1,9 +1,13 @@
+use std::rc::Rc;
+
 use monoio::time::Instant;
+use scc::Queue;
 use tracing::info;
 
 use super::cmd::Command;
-use super::connection::Connection;
+use super::connection::{Connection, ReadConnection};
 use super::context::Context;
+use super::frame::Frame;
 
 /// Per-connection handler. Reads requests from `connection` and applies the
 /// commands.
@@ -11,6 +15,7 @@ pub struct Handler {
     /// The TCP connection decorated with the redis protocol encoder / decoder
     /// implemented using a buffered `TcpStream`.
     pub connection: Connection,
+    pub connection_r: ReadConnection,
 }
 
 impl Handler {
@@ -18,44 +23,64 @@ impl Handler {
     ///
     /// Request frames are read from the socket and processed. Responses are
     /// written back to the socket.
-    pub async fn run(&mut self, ctx: Context) -> anyhow::Result<()> {
-        loop {
-            // ----------------------------------------------------------------
-            // This should belong to the transport layer
-            // ---------------------------------------------------------------
-            // TODO: Support pipelining
-            let frame_opt = self.connection.read_frame().await?;
+    pub async fn run(self, ctx: Context) -> anyhow::Result<()> {
+        let (tx, mut rx) = local_sync::mpsc::unbounded::channel();
 
-            // If `None` is returned from `read_frame()` then the peer closed
-            // the socket. There is no further work to do and the task can be
-            // terminated.
-            let frame = match frame_opt {
-                Some(frame) => frame,
-                None => return Ok(()),
-            };
+        let mut connection_r = self.connection_r;
+        let mut connection = self.connection;
 
-            // Convert the redis frame into a command struct. This returns an
-            // error if the frame is not a valid redis command or it is an
-            // unsupported command.
-            // 100 ns
-            let cmd = Command::from_frame(frame)?;
+        let accepting_frames_handle = monoio::spawn(async move {
+            loop {
+                let frame_opt = connection_r.read_frame().await?;
 
-            // TODO: Command must impl rkyv to be able to be send over another
-            // thread
+                // If `None` is returned from `read_frame()` then the peer
+                // closed the socket. There is no further work
+                // to do and the task can be terminated.
+                let frame = match frame_opt {
+                    Some(frame) => frame,
+                    None => return Ok::<_, anyhow::Error>(()),
+                };
 
-            // ----------------------------------------------------------------
-            // Sharding here
+                tx.send(frame).unwrap();
+            }
+        });
 
-            // TODO: Sharding: here the command know if it's about a specific
-            // key, so we are able to do the sharding here.
-            //
-            // Connection is not Send, but if the data is not in the good
-            // thread, we still have to communicate the command and wait for the
-            // response
+        let answer_in_order_handle = monoio::spawn(async move {
+            while let Some(frame) = rx.recv().await {
+                // Convert the redis frame into a command struct. This returns
+                // an error if the frame is not a valid redis
+                // command or it is an unsupported command.
+                // 100 ns
+                let cmd = Command::from_frame(frame)?;
 
-            // TODO: Rework the apply because we do not have the initial
-            // connection but we should have a stream to the `stream_w` part.
-            cmd.apply(&mut self.connection, ctx.clone()).await?;
+                // ----------------------------------------------------------------
+                // Sharding here
+
+                // TODO: Sharding: here the command know if it's about a
+                // specific key, so we are able to do the
+                // sharding here.
+                //
+                // Connection is not Send, but if the data is not in the good
+                // thread, we still have to communicate the command and wait for
+                // the response
+
+                // TODO: Rework the apply because we do not have the initial
+                // connection but we should have a stream to the `stream_w`
+                // part.
+                cmd.apply(&mut connection, ctx.clone()).await?;
+            }
+            Ok::<_, anyhow::Error>(())
+        });
+
+        monoio::select! {
+            r = accepting_frames_handle => {
+                // println!("operation timed out");
+                return r;
+            }
+            r = answer_in_order_handle => {
+                // println!("operation completed");
+                return r;
+            }
         }
     }
 }

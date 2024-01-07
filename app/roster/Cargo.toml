@@ -31,12 +31,15 @@ cfg-if = "1"
 config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true
-monoio = { workspace = true, features = ["bytes", "sync"] }
+local-sync = "0.1"
+monoio = { workspace = true, features = ["bytes", "zero-copy", "iouring"] }
 rkyv = { version = "0.7", features = ["alloc", "validation", "bytes"] }
+rustc-hash = "1.1.0"
 smallvec = "1"
 scc = "2"
 serde.workspace = true
 thiserror = "1"
+thread-priority = "0.15"
 
 # Logging
 tracing = { workspace = true, features = ["attributes"] }

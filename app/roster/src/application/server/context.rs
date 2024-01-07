@@ -1,5 +1,6 @@
 use std::cell::Cell;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use coarsetime::Instant;
 
@@ -7,12 +8,12 @@ use crate::domain::storage::Storage;
 
 #[derive(Clone)]
 pub struct Context {
-    pub storage: Rc<Storage>,
+    pub storage: Storage,
     now: Cell<bool>,
 }
 
 impl Context {
-    pub fn new(storage: Rc<Storage>) -> Self {
+    pub fn new(storage: Storage) -> Self {
         Self {
             storage,
             now: Cell::new(false),

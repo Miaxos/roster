@@ -1,12 +1,15 @@
 //! The whole redis server implementation is here.
 use std::net::SocketAddr;
+use std::os::fd::AsRawFd;
 use std::rc::Rc;
 use std::sync::atomic::AtomicU16;
 use std::sync::Arc;
 use std::thread::JoinHandle;
+use std::time::Duration;
 
 use derive_builder::Builder;
-use monoio::net::TcpListener;
+use monoio::net::{ListenerConfig, TcpListener};
+use thread_priority::{set_current_thread_priority, ThreadPriorityValue};
 use tracing::{error, info};
 
 mod connection;
@@ -56,10 +59,13 @@ impl ServerConfig {
 
                 rt.block_on(async move {
                     // Initialize domain
-                    let storage = Rc::new(domain::storage::Storage::default());
+                    let storage = domain::storage::Storage::new();
 
-                    let listener = TcpListener::bind(config.bind_addr)
-                        .expect("Couldn't listen to addr");
+                    let listener = TcpListener::bind_with_config(
+                        config.bind_addr,
+                        &ListenerConfig::new(),
+                    )
+                    .expect("Couldn't listen to addr");
 
                     loop {
                         let storage = storage.clone();
@@ -72,13 +78,25 @@ impl ServerConfig {
                             .expect("Unable to accept connections");
 
                         conn.set_nodelay(true).unwrap();
+                        /*
+                        conn.set_tcp_keepalive(
+                            Some(Duration::from_secs(1)),
+                            None,
+                            None,
+                        )
+                        .unwrap();
+                        */
 
                         // We map it to an `Handler` which is able to understand
                         // the Redis protocol
 
                         let _spawned = monoio::spawn(async move {
+                            let (connection, r) =
+                                Connection::new(conn, 4 * 1024);
+
                             let mut handler = Handler {
-                                connection: Connection::new(conn, 4 * 1024),
+                                connection,
+                                connection_r: r,
                             };
 
                             let ctx = Context::new(storage);
