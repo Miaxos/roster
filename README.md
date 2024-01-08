@@ -17,9 +17,32 @@ comptabile redis APIs.
 It is more like an expirement right now on, feel free to contribute. Some of the
 initial code involving the resp protocol comes from `mini-redis`.
 
-## Benchmarks
+The current work is to have a good fundation to be able to build the Redis
+Protocol on top of it.
 
-WIP
+## Benchmarks
+If you want some benchmarks, feel free to check on:
+[benchmarks](./docs/benchmarks.md);
+
+The redis APIs are not properly implemented and only some basics things are
+present so those benchmarks are only to check that the decisions made for the
+storage & the I/O are good.
+
+Those will be updated as implementations progress.
+
+Benchmarks are made between Redis, Dragonfly & Roster.
+
+### ENT1-M Scaleway
+
+First benchmarks are based on an ENT1-M Scaleway which is a decent instance but
+not a really big one and we are limited a lot by the instance and the network
+between our two instances, as for Redis & Dragonfly.
+
+- 16 vCPUS
+- RAM: 64G
+- BW: 3,2 Gbps 
+
+<img src="./docs/entm1-scaleway.svg" width="80%" />
 
 ## Protocol
 
