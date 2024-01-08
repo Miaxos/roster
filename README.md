@@ -42,7 +42,9 @@ between our two instances, as for Redis & Dragonfly.
 - RAM: 64G
 - BW: 3,2 Gbps 
 
-<img src="./docs/entm1-scaleway.svg" width="80%" />
+<p align="center">
+    <img src="./docs/entm1-scaleway.svg" width="60%" />
+</p>
 
 ## Protocol
 
