@@ -10,6 +10,7 @@
 [![Crates.io version](https://img.shields.io/crates/v/roster.svg)](https://crates.io/crates/roster)
 [![dependency status](https://deps.rs/repo/github/miaxos/roster/status.svg)](https://deps.rs/repo/github/miaxos/roster)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/miaxos/roster/compare)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMiaxos%2Froster.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FMiaxos%2Froster?ref=badge_shield)
 
 `roster` is an in-memory data store which is aiming to provide a fully
 comptabile redis APIs.
@@ -91,3 +92,7 @@ We use
 - https://github.com/tair-opensource/compatibility-test-suite-for-redis
 - https://github.com/redis/redis-specifications
 - https://github.com/redis/redis-benchmarks-specification
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMiaxos%2Froster.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FMiaxos%2Froster?ref=badge_large)
