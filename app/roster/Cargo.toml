@@ -25,16 +25,19 @@ default = []
 anyhow.workspace = true
 atoi_simd = "0.15"
 coarsetime = "0.1"
+crc = "3"
 bytestring = "1.3"
 bytes.workspace = true
 cfg-if = "1"
 config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true
+futures = "0.3"
 local-sync = "0.1"
-monoio = { workspace = true, features = ["bytes", "zero-copy", "iouring"] }
+monoio = { workspace = true, features = ["bytes", "sync", "iouring"] }
 rustc-hash = "1.1.0"
 scc = "2"
+sharded-thread = "0.1"
 serde.workspace = true
 thiserror = "1"
 

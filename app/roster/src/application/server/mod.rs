@@ -1,11 +1,15 @@
 //! The whole redis server implementation is here.
 use std::net::SocketAddr;
+use std::os::fd::{FromRawFd, RawFd};
+use std::rc::Rc;
 use std::sync::atomic::AtomicU16;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
+use crc::{Crc, CRC_16_XMODEM};
 use derive_builder::Builder;
-use monoio::net::{ListenerConfig, TcpListener};
+use futures::StreamExt;
+use monoio::net::{ListenerConfig, TcpListener, TcpStream};
 
 mod connection;
 mod context;
@@ -17,6 +21,7 @@ mod cmd;
 
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
+use crate::application::server::handle::ConnectionMsg;
 use crate::domain;
 
 #[derive(Debug, Builder, Clone)]
@@ -35,16 +40,44 @@ cfg_if::cfg_if! {
     }
 }
 
+const CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_XMODEM);
+
+pub const fn crc_hash(bytes: &[u8]) -> u16 {
+    CRC.checksum(bytes) % 16384
+}
+
 impl ServerConfig {
     pub fn initialize(self) -> ServerHandle {
         let mut threads = Vec::new();
         let cpus: usize = std::thread::available_parallelism().unwrap().into();
 
+        type Msg = ConnectionMsg;
+        let mesh = sharded_thread::mesh::MeshBuilder::<Msg>::new().unwrap();
+
+        let mut slots = Vec::new();
+        for cpu in 0..cpus {
+            let part_size: u16 = 16384 / cpus as u16;
+            let remainder: u16 = 16384 % cpus as u16;
+
+            let start = cpu as u16 * part_size as u16;
+            let end = if cpu == cpus - 1 {
+                (cpu as u16 + 1) * part_size + remainder as u16
+            } else {
+                (cpu as u16 + 1) * part_size as u16
+            };
+
+            let slot = start..end;
+            slots.push(slot);
+        }
+
         for cpu in 0..cpus {
             let config = self.clone();
+            let shard = mesh.join_with(cpu).unwrap();
+
+            let slot = slots.get(cpu).unwrap().clone();
+            let slots = slots.clone();
+
             let handle = std::thread::spawn(move || {
-                // info!("[Server] Spawned");
-                dbg!(cpu);
                 monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
 
                 let mut rt = monoio::RuntimeBuilder::<Driver>::new()
@@ -55,7 +88,8 @@ impl ServerConfig {
 
                 rt.block_on(async move {
                     // Initialize domain
-                    let storage = domain::storage::Storage::new();
+                    let storage = domain::storage::Storage::new(slots, slot);
+                    let shard = Rc::new(shard);
 
                     let listener = TcpListener::bind_with_config(
                         config.bind_addr,
@@ -63,10 +97,64 @@ impl ServerConfig {
                     )
                     .expect("Couldn't listen to addr");
 
+                    // Start the async task which is able to receive connection
+                    // from other thread
+                    let storage_inter_thread = storage.clone();
+                    let shard_inter_thread = shard.clone();
+                    monoio::spawn(async move {
+                        let storage = storage_inter_thread;
+                        let shard = shard_inter_thread;
+
+                        let mut receiver = shard.receiver().unwrap();
+
+                        while let Some(ConnectionMsg {
+                            fd,
+                            current_command,
+                            rest_frame,
+                        }) = receiver.next().await
+                        {
+                            let storage = storage.clone();
+                            let shard = shard.clone();
+                            // TODO: We miss things in the buffer right now &
+                            // pipelining
+                            // Already accepted tcp stream, we don't need to
+                            // accept it again.
+                            let tcp =
+                                unsafe { std::net::TcpStream::from_raw_fd(fd) };
+                            let conn = TcpStream::from_std(tcp);
+                            let conn = conn.unwrap();
+                            conn.set_nodelay(true).unwrap();
+
+                            let _spawned = monoio::spawn(async move {
+                                let (connection, r) =
+                                    WriteConnection::new(conn, 4 * 1024);
+
+                                let handler = Handler {
+                                    connection,
+                                    connection_r: r,
+                                    shard: shard.clone(),
+                                };
+
+                                let ctx = Context::new(storage);
+
+                                if let Err(err) = handler
+                                    .continue_run(ctx, current_command)
+                                    .await
+                                {
+                                    dbg!(err.backtrace());
+                                    dbg!(&err);
+                                    // error!(?err);
+                                    panic!("blbl");
+                                }
+                                // handler.connection.stop().await.unwrap();
+                            });
+                        }
+                    });
+
                     loop {
                         let storage = storage.clone();
+                        let shard = shard.clone();
 
-                        // listener.cancelable_accept(c)?
                         // We accept the TCP Connection
                         let (conn, _addr) = listener
                             .accept()
@@ -74,18 +162,9 @@ impl ServerConfig {
                             .expect("Unable to accept connections");
 
                         conn.set_nodelay(true).unwrap();
-                        /*
-                        conn.set_tcp_keepalive(
-                            Some(Duration::from_secs(1)),
-                            None,
-                            None,
-                        )
-                        .unwrap();
-                        */
 
                         // We map it to an `Handler` which is able to understand
                         // the Redis protocol
-
                         let _spawned = monoio::spawn(async move {
                             let (connection, r) =
                                 WriteConnection::new(conn, 4 * 1024);
@@ -93,6 +172,7 @@ impl ServerConfig {
                             let handler = Handler {
                                 connection,
                                 connection_r: r,
+                                shard: shard.clone(),
                             };
 
                             let ctx = Context::new(storage);

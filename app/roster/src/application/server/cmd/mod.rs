@@ -29,12 +29,23 @@ pub enum Command {
 }
 
 pub trait CommandExecution: Sized {
-    /// Apply a command or a subcommand.
+    /// Apply the command to the specified `Db` instance.
+    ///
+    /// The response is written to `dst`. This is called by the server in order
+    /// to execute a received command.
     async fn apply(
         self,
         dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()>;
+
+    /// Give the hash_key for the specified command
+    /// it'll tell us where we should send this command based on the hash
+    ///
+    /// https://redis.io/docs/reference/cluster-spec/#key-distribution-model
+    fn hash_key(&self) -> Option<u16> {
+        None
+    }
 }
 
 pub trait SubcommandRegistry {
@@ -96,12 +107,10 @@ impl Command {
         // The command has been successfully parsed
         Ok(command)
     }
+}
 
-    /// Apply the command to the specified `Db` instance.
-    ///
-    /// The response is written to `dst`. This is called by the server in order
-    /// to execute a received command.
-    pub(crate) async fn apply(
+impl CommandExecution for Command {
+    async fn apply(
         self,
         dst: &mut WriteConnection,
         ctx: Context,
@@ -114,6 +123,18 @@ impl Command {
             Client(cmd) => cmd.apply(dst, ctx).await,
             Set(cmd) => cmd.apply(dst, ctx).await,
             Get(cmd) => cmd.apply(dst, ctx).await,
+        }
+    }
+
+    fn hash_key(&self) -> Option<u16> {
+        use Command::*;
+
+        match self {
+            Ping(cmd) => cmd.hash_key(),
+            Unknown(cmd) => cmd.hash_key(),
+            Client(cmd) => cmd.hash_key(),
+            Set(cmd) => cmd.hash_key(),
+            Get(cmd) => cmd.hash_key(),
         }
     }
 }

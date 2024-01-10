@@ -1,6 +1,7 @@
 //! Storage primitive which is used to interact with Keys
 
 use std::hash::BuildHasherDefault;
+use std::ops::Range;
 use std::rc::Rc;
 use std::sync::atomic::AtomicU32;
 
@@ -23,6 +24,8 @@ pub struct StorageValue {
 #[derive(Default, Debug, Clone)]
 pub struct Storage {
     db: Rc<HashMap<ByteString, StorageValue, BuildHasherDefault<FxHasher>>>,
+    slot: Range<u16>,
+    slots: Vec<Range<u16>>,
     count: Rc<AtomicU32>,
 }
 
@@ -32,7 +35,7 @@ pub struct SetOptions {
 }
 
 impl Storage {
-    pub fn new() -> Self {
+    pub fn new(slots: Vec<Range<u16>>, slot: Range<u16>) -> Self {
         for _ in 0..4096 {
             drop(scc::ebr::Guard::new());
         }
@@ -42,8 +45,22 @@ impl Storage {
                 4096,
                 Default::default(),
             )),
+            slot,
+            slots,
             count: Rc::new(AtomicU32::new(0)),
         }
+    }
+
+    pub fn is_in_slot(&self, i: u16) -> bool {
+        self.slot.contains(&i)
+    }
+
+    pub fn slot_nb(&self, i: u16) -> Option<usize> {
+        self.slots
+            .iter()
+            .enumerate()
+            .find(|(idx, x)| x.contains(&i))
+            .map(|(idx, _)| idx)
     }
 
     /// Set a key

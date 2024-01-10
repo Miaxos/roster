@@ -18,6 +18,14 @@ impl Context {
         }
     }
 
+    pub fn is_in_slot(&self, hash: u16) -> bool {
+        self.storage.is_in_slot(hash)
+    }
+
+    pub fn slot_nb(&self, hash: u16) -> Option<usize> {
+        self.storage.slot_nb(hash)
+    }
+
     #[inline]
     pub fn now(&self) -> Instant {
         let now = self.now.get();

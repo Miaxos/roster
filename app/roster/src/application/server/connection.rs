@@ -1,4 +1,6 @@
+use std::fmt::Debug;
 use std::io::{self, Cursor};
+use std::rc::Rc;
 
 use bytes::BytesMut;
 use monoio::buf::IoBuf;
@@ -31,6 +33,12 @@ pub struct WriteConnection {
 pub struct ReadConnection {
     pub stream_r: BufReader<OwnedReadHalf<TcpStream>>,
     buffer: BytesMut,
+}
+
+impl Debug for ReadConnection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ReadConnection")
+    }
 }
 
 impl ReadConnection {
@@ -134,6 +142,10 @@ impl ReadConnection {
             // in the connection being closed.
             Err(e) => Err(e.into()),
         }
+    }
+
+    pub fn into_inner(self) -> OwnedReadHalf<TcpStream> {
+        self.stream_r.into_inner()
     }
 }
 
@@ -243,5 +255,13 @@ impl WriteConnection {
         self.stream_w.write(b"\r\n").await.0?;
 
         Ok(())
+    }
+
+    pub fn into_inner(self) -> OwnedWriteHalf<TcpStream> {
+        self.stream_w.into_inner()
+    }
+
+    pub fn reunite(self, read: ReadConnection) -> TcpStream {
+        self.into_inner().reunite(read.into_inner()).unwrap()
     }
 }

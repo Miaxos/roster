@@ -2,12 +2,14 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use bytestring::ByteString;
+use crc::{Crc, CRC_16_XMODEM};
 
 use super::parse::{Parse, ParseError};
 use super::CommandExecution;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
+use crate::application::server::{crc_hash, CRC};
 use crate::domain::storage::SetOptions;
 
 /// Set key to hold the string value. If key already holds a value, it is
@@ -143,5 +145,9 @@ impl CommandExecution for Set {
         dst.write_frame(&response).await?;
 
         Ok(())
+    }
+
+    fn hash_key(&self) -> Option<u16> {
+        Some(crc_hash(self.key.as_bytes()))
     }
 }
