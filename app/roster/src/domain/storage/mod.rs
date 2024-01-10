@@ -78,6 +78,7 @@ impl Storage {
         let old = self
             .count
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        /*
         // Simulate some eviction mechanisme when we have too many keys
         if old > 200_000 {
             // dbg!("remove");
@@ -91,6 +92,7 @@ impl Storage {
                 count.swap(0, std::sync::atomic::Ordering::Relaxed);
             });
         }
+        */
 
         if let Err((key, val)) = self.db.insert(key, val) {
             let old = self.db.update(&key, |_, _| val);
