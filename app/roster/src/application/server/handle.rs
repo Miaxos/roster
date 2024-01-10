@@ -4,6 +4,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use monoio::net::TcpStream;
+use monoio::time::Instant;
 use sharded_thread::shard::Shard;
 
 use super::cmd::Command;

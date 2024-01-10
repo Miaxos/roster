@@ -16,6 +16,7 @@ mod context;
 pub mod frame;
 mod handle;
 use handle::Handler;
+use monoio::time::Instant;
 
 mod cmd;
 
@@ -93,7 +94,7 @@ impl ServerConfig {
 
                     let listener = TcpListener::bind_with_config(
                         config.bind_addr,
-                        &ListenerConfig::new(),
+                        &ListenerConfig::new().backlog(16192),
                     )
                     .expect("Couldn't listen to addr");
 
@@ -107,47 +108,55 @@ impl ServerConfig {
 
                         let mut receiver = shard.receiver().unwrap();
 
-                        while let Some(ConnectionMsg {
-                            fd,
-                            current_command,
-                            rest_frame,
-                        }) = receiver.next().await
-                        {
-                            let storage = storage.clone();
+                        loop {
                             let shard = shard.clone();
-                            // TODO: We miss things in the buffer right now &
-                            // pipelining
-                            // Already accepted tcp stream, we don't need to
-                            // accept it again.
-                            let tcp =
-                                unsafe { std::net::TcpStream::from_raw_fd(fd) };
-                            let conn = TcpStream::from_std(tcp);
-                            let conn = conn.unwrap();
-                            conn.set_nodelay(true).unwrap();
+                            let ctx = Context::new(storage.clone());
 
-                            let _spawned = monoio::spawn(async move {
-                                let (connection, r) =
-                                    WriteConnection::new(conn, 4 * 1024);
+                            // Pre-allocate next buffer;
 
-                                let handler = Handler {
-                                    connection,
-                                    connection_r: r,
-                                    shard: shard.clone(),
-                                };
+                            if let Some(ConnectionMsg {
+                                fd,
+                                current_command,
+                                rest_frame,
+                            }) = receiver.next().await
+                            {
+                                let _spawned = monoio::spawn(async move {
+                                    // TODO: We miss things in the buffer right
+                                    // now &
+                                    // pipelining
+                                    // Already accepted tcp stream, we don't
+                                    // need to
+                                    // accept it again.
+                                    let tcp = unsafe {
+                                        std::net::TcpStream::from_raw_fd(fd)
+                                    };
+                                    let conn =
+                                        TcpStream::from_std(tcp).unwrap();
+                                    conn.set_nodelay(true).unwrap();
 
-                                let ctx = Context::new(storage);
+                                    let (connection, r) =
+                                        WriteConnection::new(conn, 4 * 1024);
 
-                                if let Err(err) = handler
-                                    .continue_run(ctx, current_command)
-                                    .await
-                                {
-                                    dbg!(err.backtrace());
-                                    dbg!(&err);
-                                    // error!(?err);
-                                    panic!("blbl");
-                                }
-                                // handler.connection.stop().await.unwrap();
-                            });
+                                    let handler = Handler {
+                                        connection,
+                                        connection_r: r,
+                                        shard,
+                                    };
+
+                                    if let Err(err) = handler
+                                        .continue_run(ctx, current_command)
+                                        .await
+                                    {
+                                        dbg!(err.backtrace());
+                                        dbg!(&err);
+                                        // error!(?err);
+                                        panic!("blbl");
+                                    }
+                                    // handler.connection.stop().await.unwrap();
+                                });
+                            } else {
+                                break;
+                            }
                         }
                     });
 
@@ -162,6 +171,7 @@ impl ServerConfig {
                             .expect("Unable to accept connections");
 
                         conn.set_nodelay(true).unwrap();
+                        let ctx = Context::new(storage);
 
                         // We map it to an `Handler` which is able to understand
                         // the Redis protocol
@@ -174,8 +184,6 @@ impl ServerConfig {
                                 connection_r: r,
                                 shard: shard.clone(),
                             };
-
-                            let ctx = Context::new(storage);
 
                             if let Err(err) = handler.run(ctx).await {
                                 dbg!(err.backtrace());
