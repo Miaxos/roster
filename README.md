@@ -59,9 +59,14 @@ between our two instances, as for Redis & Dragonfly.
 
 To be able to max out performances out of an application we must be able to have
 a linear-scalability.[^1] Usual issues around scalability are when you share
-data between threads, (like false-sharing[^3]). To solve this issue, we will use
-a shared-nothing architecture (right now we aren't due to some APIs not
-implemented yet) where each thread will own his own slice of the storage.
+data between threads, (like false-sharing[^3]). 
+
+To solve this issue we use an
+[scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap)
+which is a really efficient datastructure. This datastructure can be shared
+across multiple thread without having a loss in performance expect when have too
+many thread. When this happens, we'll partition the storage by load-balancing
+TCP connection on those threads when there is a need to.
 
 We also use a runtime which is based on `io-uring` to handle every I/O on the
 application: [monoio](https://github.com/bytedance/monoio/).
@@ -83,8 +88,10 @@ Memcached running on commodity hardware and Linux.*"[^2]
 
 ### Storage
 
-We use
-[scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap) behind an `Arc` for now while Sharding APIs are not implemented on [monoio](https://github.com/bytedance/monoio/issues/213) but as soon as we have a way to load-balance our TCP Connection to the proper thread, we should switch to a `scc::Hashmap` per thread.
+We do not use one use one
+[scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap)
+per thread because it's more efficient than to shard the storage by thread and
+load balance the TCP connections.
 
 ## References
 

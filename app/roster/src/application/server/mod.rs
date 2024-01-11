@@ -79,6 +79,7 @@ impl ServerConfig {
             let slots = slots.clone();
 
             let handle = std::thread::spawn(move || {
+                dbg!(cpu);
                 monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
 
                 let mut rt = monoio::RuntimeBuilder::<Driver>::new()
