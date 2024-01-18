@@ -88,6 +88,17 @@ Memcached running on commodity hardware and Linux.*"[^2]
 
 ### Storage
 
+For the storage, instead of having each thread handling his part of the storage
+with a load balancing based on TCP connection, it seems it's more efficient to
+have a storage shared between a number of threads.
+
+We split the whole application into a number of Storage Segment which are shared
+between a fixed number of thread.
+
+<p align="center">
+    <img src="./docs/storage.svg" width="60%" />
+</p>
+
 We do not use one use one
 [scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap)
 per thread because it's more efficient than to shard the storage by thread and
