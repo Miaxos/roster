@@ -14,7 +14,7 @@ repository = "https://github.com/miaxos/roster/"
 anyhow = "1"
 bytes = "1"
 config = "0.13"
-derive_builder = "0.12"
+derive_builder = "0.13"
 dotenv = "0.15"
 monoio = { git = "https://github.com/bytedance/monoio.git", rev = "f684db16bd4e3b2303d5b7af1e18723aeb556d24" }
 insta = { version = "1", features = ["yaml"] }
