@@ -2,16 +2,16 @@ use std::cell::Cell;
 
 use coarsetime::Instant;
 
-use crate::domain::storage::Storage;
+use crate::domain::storage::StorageSegment;
 
 #[derive(Clone)]
 pub struct Context {
-    pub storage: Storage,
+    pub storage: StorageSegment,
     now: Cell<bool>,
 }
 
 impl Context {
-    pub fn new(storage: Storage) -> Self {
+    pub fn new(storage: StorageSegment) -> Self {
         Self {
             storage,
             now: Cell::new(false),

@@ -99,11 +99,6 @@ between a fixed number of thread.
     <img src="./docs/storage.svg" width="60%" />
 </p>
 
-We do not use one use one
-[scc::Hashmap](https://github.com/wvwwvwwv/scalable-concurrent-containers#HashMap)
-per thread because it's more efficient than to shard the storage by thread and
-load balance the TCP connections.
-
 ## References
 
 - [RESP3](https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md)

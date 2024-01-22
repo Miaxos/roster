@@ -17,8 +17,10 @@ pub mod frame;
 mod handle;
 use handle::Handler;
 use monoio::time::Instant;
+use sharded_thread::shard::Shard;
 
 mod cmd;
+mod server_thread;
 
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
@@ -43,22 +45,26 @@ cfg_if::cfg_if! {
 
 const CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_XMODEM);
 
+pub const HASH_SLOT_MAX: u16 = 16384;
 pub const fn crc_hash(bytes: &[u8]) -> u16 {
-    CRC.checksum(bytes) % 16384
+    CRC.checksum(bytes) % HASH_SLOT_MAX
 }
 
 impl ServerConfig {
+    /// Initialize a Server by starting the thread for each core and assigning
+    /// the storage segment & hash slots based on the configuration.
     pub fn initialize(self) -> ServerHandle {
         let mut threads = Vec::new();
         let cpus: usize = std::thread::available_parallelism().unwrap().into();
 
-        type Msg = ConnectionMsg;
-        let mesh = sharded_thread::mesh::MeshBuilder::<Msg>::new().unwrap();
+        // The mesh used to pass a whole connection if needed.
+        let mesh =
+            sharded_thread::mesh::MeshBuilder::<ConnectionMsg>::new().unwrap();
 
         let mut slots = Vec::new();
         for cpu in 0..cpus {
-            let part_size: u16 = 16384 / cpus as u16;
-            let remainder: u16 = 16384 % cpus as u16;
+            let part_size: u16 = HASH_SLOT_MAX / cpus as u16;
+            let remainder: u16 = HASH_SLOT_MAX % cpus as u16;
 
             let start = cpu as u16 * part_size as u16;
             let end = if cpu == cpus - 1 {
@@ -89,7 +95,8 @@ impl ServerConfig {
 
                 rt.block_on(async move {
                     // Initialize domain
-                    let storage = domain::storage::Storage::new(slots, slot);
+                    let storage =
+                        domain::storage::StorageSegment::new(slots, slot);
                     let shard = Rc::new(shard);
 
                     let listener = TcpListener::bind_with_config(

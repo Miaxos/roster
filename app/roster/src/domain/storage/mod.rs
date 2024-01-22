@@ -4,6 +4,7 @@ use std::hash::BuildHasherDefault;
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::atomic::AtomicU32;
+use std::sync::Arc;
 
 use bytes::Bytes;
 use bytestring::ByteString;
@@ -17,10 +18,11 @@ pub struct StorageValue {
     pub val: Bytes,
 }
 
-/// Storage
+/// A [StorageSegment] is shared across multiple threads and owns a part of the
+/// hashing keys.
 #[derive(Default, Debug, Clone)]
-pub struct Storage {
-    db: Rc<HashMap<ByteString, StorageValue, BuildHasherDefault<FxHasher>>>,
+pub struct StorageSegment {
+    db: Arc<HashMap<ByteString, StorageValue, BuildHasherDefault<FxHasher>>>,
     slot: Range<u16>,
     slots: Vec<Range<u16>>,
     count: Rc<AtomicU32>,
@@ -31,14 +33,15 @@ pub struct SetOptions {
     pub expired: Option<Instant>,
 }
 
-impl Storage {
+impl StorageSegment {
+    /// Create a new [StorageSegment] by specifying the hash slot it handles.
     pub fn new(slots: Vec<Range<u16>>, slot: Range<u16>) -> Self {
         for _ in 0..4096 {
             drop(scc::ebr::Guard::new());
         }
 
         Self {
-            db: Rc::new(HashMap::with_capacity_and_hasher(
+            db: Arc::new(HashMap::with_capacity_and_hasher(
                 4096,
                 Default::default(),
             )),
