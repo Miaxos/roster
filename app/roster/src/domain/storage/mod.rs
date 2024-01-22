@@ -11,9 +11,6 @@ use coarsetime::Instant;
 use rustc_hash::FxHasher;
 use scc::HashMap;
 
-// We disallow Send just to be sure
-// impl !Send for Storage {}
-
 #[derive(Debug)]
 pub struct StorageValue {
     pub expired: Option<Instant>,
