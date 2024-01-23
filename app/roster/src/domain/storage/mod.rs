@@ -125,6 +125,7 @@ impl StorageSegment {
 /// A [Storage] is composed of multipe [StorageSegment] shared in threads.
 #[derive(Debug, Clone)]
 pub struct Storage {
+    global_slot: Slot,
     internal_vec: Vec<(Slot, StorageSegment)>,
 }
 
@@ -134,6 +135,8 @@ impl Storage {
     pub fn new(nb_slot: u16, slot: Slot) -> Self {
         assert!(nb_slot != 0);
         assert!(nb_slot <= HASH_SLOT_MAX);
+
+        let global_slot = slot.clone();
 
         // We generate the Slot where we need to create a StorageSegment.
         let mut slots: Vec<(Slot, StorageSegment)> = Vec::new();
@@ -155,6 +158,30 @@ impl Storage {
 
         Self {
             internal_vec: slots,
+            global_slot,
         }
+    }
+
+    /// Give every [Slot] associated to a part, where the part is the index.
+    pub fn slots(&self) -> Vec<Slot> {
+        self.internal_vec.iter().map(|(x, _)| x.clone()).collect()
+    }
+
+    /// Give the global [Slot] of the storage, which is the whole [Slot] handled
+    /// by the current server.
+    pub fn global_slot(&self) -> &Slot {
+        &self.global_slot
+    }
+
+    /// Based on the number of [StorageSegment] we have, we can take the
+    /// corresponding part based on the modulo of the nb_part.
+    ///
+    /// If we have n part, we'll assign the part based on (part % n).
+    pub fn part(&self, part: u16) -> (Slot, StorageSegment) {
+        let remainder: u16 = part % self.internal_vec.len() as u16;
+        self.internal_vec
+            .get(remainder as usize)
+            .cloned()
+            .expect("WTF")
     }
 }
