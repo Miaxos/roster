@@ -1559,9 +1559,9 @@ dependencies = [
 
 [[package]]
 name = "sharded-thread"
-version = "1.2.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "236fc51eb4eb51195e603b4dbff0041d316975a2731edeeb4b6537e8928ebbbb"
+checksum = "7cd80c9d249a2b22a1fb0486a64d1f8be0b2cbdb06b9d2723e362c3e0a22d99a"
 dependencies = [
  "futures",
  "non_blocking_mutex",
