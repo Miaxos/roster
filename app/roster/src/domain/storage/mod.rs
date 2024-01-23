@@ -1,8 +1,6 @@
 //! Storage primitive which is used to interact with Keys
 
 use std::hash::BuildHasherDefault;
-
-
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 

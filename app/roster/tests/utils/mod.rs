@@ -1,6 +1,5 @@
 use std::net::SocketAddr;
 
-
 mod port_picker;
 
 /// Start a simple Roster server
