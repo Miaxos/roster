@@ -12,6 +12,9 @@ use coarsetime::Instant;
 use rustc_hash::FxHasher;
 use scc::HashMap;
 
+use super::dialer::Slot;
+use crate::infrastructure::hash::HASH_SLOT_MAX;
+
 #[derive(Debug)]
 pub struct StorageValue {
     pub expired: Option<Instant>,
@@ -20,11 +23,10 @@ pub struct StorageValue {
 
 /// A [StorageSegment] is shared across multiple threads and owns a part of the
 /// hashing keys.
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct StorageSegment {
     db: Arc<HashMap<ByteString, StorageValue, BuildHasherDefault<FxHasher>>>,
-    slot: Range<u16>,
-    slots: Vec<Range<u16>>,
+    slot: Slot,
     count: Rc<AtomicU32>,
 }
 
@@ -35,7 +37,7 @@ pub struct SetOptions {
 
 impl StorageSegment {
     /// Create a new [StorageSegment] by specifying the hash slot it handles.
-    pub fn new(slots: Vec<Range<u16>>, slot: Range<u16>) -> Self {
+    pub fn new(slot: Slot) -> Self {
         for _ in 0..4096 {
             drop(scc::ebr::Guard::new());
         }
@@ -46,21 +48,12 @@ impl StorageSegment {
                 Default::default(),
             )),
             slot,
-            slots,
             count: Rc::new(AtomicU32::new(0)),
         }
     }
 
     pub fn is_in_slot(&self, i: u16) -> bool {
         self.slot.contains(&i)
-    }
-
-    pub fn slot_nb(&self, i: u16) -> Option<usize> {
-        self.slots
-            .iter()
-            .enumerate()
-            .find(|(idx, x)| x.contains(&i))
-            .map(|(idx, _)| idx)
     }
 
     /// Set a key
@@ -125,6 +118,43 @@ impl StorageSegment {
                 }
             }
             scc::hash_map::Entry::Vacant(_) => None,
+        }
+    }
+}
+
+/// A [Storage] is composed of multipe [StorageSegment] shared in threads.
+#[derive(Debug, Clone)]
+pub struct Storage {
+    internal_vec: Vec<(Slot, StorageSegment)>,
+}
+
+impl Storage {
+    /// Create a new [Storage] by specifying the number of slot wanted and the
+    /// whole [Slot] this [Storage] should handle.
+    pub fn new(nb_slot: u16, slot: Slot) -> Self {
+        assert!(nb_slot != 0);
+        assert!(nb_slot <= HASH_SLOT_MAX);
+
+        // We generate the Slot where we need to create a StorageSegment.
+        let mut slots: Vec<(Slot, StorageSegment)> = Vec::new();
+        for slot in 0..nb_slot {
+            let part_size: u16 = HASH_SLOT_MAX / nb_slot as u16;
+            let remainder: u16 = HASH_SLOT_MAX % nb_slot as u16;
+
+            let start = slot as u16 * part_size as u16;
+            let end = if slot == nb_slot - 1 {
+                (slot as u16 + 1) * part_size + remainder as u16
+            } else {
+                (slot as u16 + 1) * part_size as u16
+            };
+
+            let slot = Slot::from(start..end);
+            let store = StorageSegment::new(slot.clone());
+            slots.push((slot, store));
+        }
+
+        Self {
+            internal_vec: slots,
         }
     }
 }
