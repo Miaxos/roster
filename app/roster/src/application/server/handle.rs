@@ -1,4 +1,6 @@
 #![allow(clippy::await_holding_refcell_ref)]
+// TODO(@miaxos): Remove it
+
 use std::cell::RefCell;
 use std::os::fd::IntoRawFd;
 use std::rc::Rc;
