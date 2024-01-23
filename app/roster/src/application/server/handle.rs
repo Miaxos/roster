@@ -1,3 +1,4 @@
+#![allow(clippy::await_holding_refcell_ref)]
 use std::cell::RefCell;
 use std::os::fd::IntoRawFd;
 use std::rc::Rc;
@@ -67,7 +68,6 @@ impl Handler {
             let conn = connection_r.clone();
             let reading_frames = async move {
                 loop {
-                    #[allow(clippy::await_holding_refcell_ref)]
                     let frame_opt = conn.borrow_mut().read_frame().await?;
 
                     // If `None` is returned from `read_frame()` then the peer
