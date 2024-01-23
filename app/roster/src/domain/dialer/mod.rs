@@ -1,7 +1,5 @@
 use std::ops::{Deref, Range};
 
-
-
 use sharded_thread::mesh::MeshBuilder;
 use sharded_thread::shard::Shard;
 
@@ -69,12 +67,16 @@ impl RootDialer {
 #[derive(Debug)]
 pub struct Dialer {
     pub shard: Shard<ConnectionMsg>,
+    #[allow(dead_code)]
     cluster: Cluster,
     /// The current local slot of the Dialer
+    #[allow(dead_code)]
     local_slot: Slot,
     /// The whole slice of the current server
+    #[allow(dead_code)]
     global_slot: Slot,
     /// Slot -> part based on index
+    #[allow(dead_code)]
     inner_slots: Vec<Slot>,
 }
 

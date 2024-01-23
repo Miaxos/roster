@@ -1,9 +1,7 @@
 use std::cell::RefCell;
-use std::os::fd::{IntoRawFd};
+use std::os::fd::IntoRawFd;
 use std::rc::Rc;
 use std::time::Duration;
-
-
 
 use sharded_thread::shard::Shard;
 
@@ -38,6 +36,7 @@ impl Handler {
         self.run_internal(ctx, None).await
     }
 
+    #[allow(dead_code)]
     pub async fn continue_run(
         self,
         ctx: Context,

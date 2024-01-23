@@ -4,8 +4,8 @@ use super::parse::Parse;
 use super::CommandExecution;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
-use crate::application::server::crc_hash;
 use crate::application::server::frame::Frame;
+use crate::infrastructure::hash::crc_hash;
 
 /// Get the value of key. If the key does not exist the special value nil is
 /// returned. An error is returned if the value stored at key is not a string,

@@ -1,7 +1,6 @@
 use std::rc::Rc;
 use std::thread::JoinHandle;
 
-
 use monoio::net::{ListenerConfig, TcpListener};
 
 use super::ServerConfig;
@@ -31,10 +30,6 @@ pub struct ServerMonoThreadedHandle {
     storage: StorageSegment,
 }
 
-pub struct ServerMonoThreadedInitialized {
-    handle: JoinHandle<()>,
-}
-
 impl ServerMonoThreadedHandle {
     /// Start a new server thread on the cpu_core
     pub fn new(
@@ -55,8 +50,6 @@ impl ServerMonoThreadedHandle {
     }
 
     pub fn initialize(self) -> JoinHandle<()> {
-        
-
         std::thread::spawn(move || {
             monoio::utils::bind_to_cpu_set(Some(self.cpu)).unwrap();
 
@@ -112,7 +105,8 @@ impl ServerMonoThreadedHandle {
 
                 #[allow(unreachable_code)]
                 Ok::<(), anyhow::Error>(())
-            });
+            })
+            .unwrap();
         })
     }
 }
