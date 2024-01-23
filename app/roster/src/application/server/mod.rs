@@ -14,7 +14,7 @@ use monoio::net::{ListenerConfig, TcpListener, TcpStream};
 mod connection;
 mod context;
 pub mod frame;
-mod handle;
+pub(crate) mod handle;
 use handle::Handler;
 use monoio::time::Instant;
 use sharded_thread::shard::Shard;
@@ -22,10 +22,13 @@ use sharded_thread::shard::Shard;
 mod cmd;
 mod server_thread;
 
+use self::server_thread::ServerMonoThreadedHandle;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::handle::ConnectionMsg;
 use crate::domain;
+use crate::domain::dialer::{Dialer, RootDialer, Slot};
+use crate::domain::storage::Storage;
 
 #[derive(Debug, Builder, Clone)]
 #[builder(pattern = "owned", setter(into, strip_option))]
@@ -59,8 +62,28 @@ impl ServerConfig {
 
         // The mesh used to pass a whole connection if needed.
         let mesh =
-            sharded_thread::mesh::MeshBuilder::<ConnectionMsg>::new().unwrap();
+            sharded_thread::mesh::MeshBuilder::<ConnectionMsg>::new(cpus)
+                .unwrap();
 
+        let config_slot = Slot::from(0..HASH_SLOT_MAX);
+        let storage = Storage::new(1, config_slot);
+        let main_dialer = RootDialer::new(mesh, &storage);
+
+        for cpu in 0..cpus {
+            // TODO(@miaxos): There are some links between those two, mb we
+            // should modelise it again.
+            let config = self.clone();
+            let handle = ServerMonoThreadedHandle::new(
+                config,
+                &main_dialer,
+                cpu,
+                &storage,
+            );
+
+            threads.push(handle.initialize());
+        }
+
+        /*
         let mut slots = Vec::new();
         for cpu in 0..cpus {
             let part_size: u16 = HASH_SLOT_MAX / cpus as u16;
@@ -205,6 +228,7 @@ impl ServerConfig {
             });
             threads.push(handle);
         }
+        */
 
         ServerHandle { threads }
     }

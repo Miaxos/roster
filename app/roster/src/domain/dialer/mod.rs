@@ -40,6 +40,23 @@ impl RootDialer {
             mesh,
         }
     }
+
+    /// We return a [Dialer] specific to the part we use which knows to where it
+    /// should communicate based on the hash key of other threads.
+    pub fn part(&self, part: u16) -> std::io::Result<Dialer> {
+        let remainder: u16 = part % self.inner_slots.len() as u16;
+
+        let local_slot =
+            self.inner_slots.get(remainder as usize).cloned().unwrap();
+
+        Ok(Dialer {
+            shard: self.mesh.join_with(part as usize)?,
+            cluster: self.cluster.clone(),
+            global_slot: self.global_slot.clone(),
+            inner_slots: self.inner_slots.clone(),
+            local_slot,
+        })
+    }
 }
 
 /// [Dialer] is the layer which enable communication between Roster shards.
@@ -49,9 +66,9 @@ impl RootDialer {
 /// [Cluster].
 ///
 /// Should be cheap to clone
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Dialer {
-    shard: Rc<Shard<ConnectionMsg>>,
+    pub shard: Shard<ConnectionMsg>,
     cluster: Cluster,
     /// The current local slot of the Dialer
     local_slot: Slot,
@@ -59,36 +76,6 @@ pub struct Dialer {
     global_slot: Slot,
     /// Slot -> part based on index
     inner_slots: Vec<Slot>,
-}
-
-impl Dialer {
-    pub fn new(mesh: &MeshBuilder<ConnectionMsg>, storage: &Storage) -> Self {
-        let inner_slots = storage.slots();
-        let global_slot = storage.global_slot().clone();
-
-        let cluster = Cluster {};
-
-        Self {
-            global_slot,
-            inner_slots,
-            cluster,
-            shard: 
-        }
-    }
-
-    /// We return a [Dialer] specific to the part we use which knows to where it
-    /// should communicate based on the hash key of other threads.
-    pub fn part(&self, part: u16) -> Self {
-        let remainder: u16 = part % self.inner_slots.len() as u16;
-
-        let local_slot =
-            self.inner_slots.get(remainder as usize).cloned().unwrap();
-
-        Self {
-            local_slot,
-            ..Clone::clone(self)
-        }
-    }
 }
 
 /// A Hash [Slot] as defined in the Redis Cluster Specification[^1].

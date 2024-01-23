@@ -23,7 +23,8 @@ impl Context {
     }
 
     pub fn slot_nb(&self, hash: u16) -> Option<usize> {
-        self.storage.slot_nb(hash)
+        todo!()
+        // self.storage.slot_nb(hash)
     }
 
     #[inline]

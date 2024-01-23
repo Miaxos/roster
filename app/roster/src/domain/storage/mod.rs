@@ -27,7 +27,7 @@ pub struct StorageValue {
 pub struct StorageSegment {
     db: Arc<HashMap<ByteString, StorageValue, BuildHasherDefault<FxHasher>>>,
     slot: Slot,
-    count: Rc<AtomicU32>,
+    count: Arc<AtomicU32>,
 }
 
 #[derive(Default)]
@@ -48,7 +48,7 @@ impl StorageSegment {
                 Default::default(),
             )),
             slot,
-            count: Rc::new(AtomicU32::new(0)),
+            count: Arc::new(AtomicU32::new(0)),
         }
     }
 

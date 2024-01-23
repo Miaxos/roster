@@ -24,6 +24,7 @@ pub struct Handler {
 }
 
 /// Current connection that is going to be send
+#[derive(Debug)]
 pub struct ConnectionMsg {
     pub fd: i32,
     pub current_command: Command,
