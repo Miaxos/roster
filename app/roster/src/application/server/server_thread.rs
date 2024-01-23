@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use std::thread::JoinHandle;
 
-use futures::future::Join;
-use monoio::net::{ListenerConfig, TcpListener, TcpStream};
+
+use monoio::net::{ListenerConfig, TcpListener};
 
 use super::ServerConfig;
 use crate::application::server::connection::WriteConnection;
@@ -43,7 +43,7 @@ impl ServerMonoThreadedHandle {
         cpu: usize,
         storage: &Storage,
     ) -> Self {
-        let (slot, storage_segment) = storage.part(cpu as u16);
+        let (_slot, storage_segment) = storage.part(cpu as u16);
         let dialer = dialer.part(cpu as u16).unwrap();
 
         Self {
@@ -55,7 +55,9 @@ impl ServerMonoThreadedHandle {
     }
 
     pub fn initialize(self) -> JoinHandle<()> {
-        let handle = std::thread::spawn(move || {
+        
+
+        std::thread::spawn(move || {
             monoio::utils::bind_to_cpu_set(Some(self.cpu)).unwrap();
 
             let mut rt = monoio::RuntimeBuilder::<Driver>::new()
@@ -111,8 +113,6 @@ impl ServerMonoThreadedHandle {
                 #[allow(unreachable_code)]
                 Ok::<(), anyhow::Error>(())
             });
-        });
-
-        handle
+        })
     }
 }

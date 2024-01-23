@@ -22,7 +22,7 @@ impl Context {
         self.storage.is_in_slot(hash)
     }
 
-    pub fn slot_nb(&self, hash: u16) -> Option<usize> {
+    pub fn slot_nb(&self, _hash: u16) -> Option<usize> {
         todo!()
         // self.storage.slot_nb(hash)
     }

@@ -1,8 +1,8 @@
 //! Storage primitive which is used to interact with Keys
 
 use std::hash::BuildHasherDefault;
-use std::ops::Range;
-use std::rc::Rc;
+
+
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 
@@ -68,7 +68,7 @@ impl StorageSegment {
             val,
         };
 
-        let old = self
+        let _old = self
             .count
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         /*
@@ -141,14 +141,14 @@ impl Storage {
         // We generate the Slot where we need to create a StorageSegment.
         let mut slots: Vec<(Slot, StorageSegment)> = Vec::new();
         for slot in 0..nb_slot {
-            let part_size: u16 = HASH_SLOT_MAX / nb_slot as u16;
-            let remainder: u16 = HASH_SLOT_MAX % nb_slot as u16;
+            let part_size: u16 = HASH_SLOT_MAX / nb_slot;
+            let remainder: u16 = HASH_SLOT_MAX % nb_slot;
 
-            let start = slot as u16 * part_size as u16;
+            let start = slot * part_size;
             let end = if slot == nb_slot - 1 {
-                (slot as u16 + 1) * part_size + remainder as u16
+                (slot + 1) * part_size + remainder
             } else {
-                (slot as u16 + 1) * part_size as u16
+                (slot + 1) * part_size
             };
 
             let slot = Slot::from(start..end);
