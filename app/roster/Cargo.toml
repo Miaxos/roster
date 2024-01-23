@@ -37,7 +37,7 @@ local-sync = "0.1"
 monoio = { workspace = true, features = ["bytes", "sync", "iouring"] }
 rustc-hash = "1.1.0"
 scc = "2"
-sharded-thread = "0.1"
+sharded-thread = "1"
 serde.workspace = true
 thiserror = "1"
 
