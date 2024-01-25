@@ -5,19 +5,20 @@ use std::sync::Arc;
 use std::thread::JoinHandle;
 
 use derive_builder::Builder;
-use monoio::net::{ListenerConfig, TcpListener};
 
 mod connection;
 mod context;
 pub mod frame;
-mod handle;
-use handle::Handler;
+pub(crate) mod handle;
 
 mod cmd;
+mod server_thread;
 
-use crate::application::server::connection::WriteConnection;
-use crate::application::server::context::Context;
-use crate::domain;
+use self::server_thread::ServerMonoThreadedHandle;
+use crate::application::server::handle::ConnectionMsg;
+use crate::domain::dialer::{RootDialer, Slot};
+use crate::domain::storage::Storage;
+use crate::infrastructure::hash::HASH_SLOT_MAX;
 
 #[derive(Debug, Builder, Clone)]
 #[builder(pattern = "owned", setter(into, strip_option))]
@@ -27,88 +28,36 @@ pub struct ServerConfig {
     connections_limit: Arc<AtomicU16>,
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
-        type Driver = monoio::IoUringDriver;
-    } else {
-        type Driver = monoio::LegacyDriver;
-    }
-}
-
 impl ServerConfig {
+    /// Initialize a Server by starting the thread for each core and assigning
+    /// the storage segment & hash slots based on the configuration.
     pub fn initialize(self) -> ServerHandle {
         let mut threads = Vec::new();
         let cpus: usize = std::thread::available_parallelism().unwrap().into();
+        // let cpus = 1;
+
+        // The mesh used to pass a whole connection if needed.
+        let mesh =
+            sharded_thread::mesh::MeshBuilder::<ConnectionMsg>::new(cpus)
+                .unwrap();
+
+        let config_slot = Slot::from(0..HASH_SLOT_MAX);
+        let storage = Storage::new(1, config_slot);
+        let main_dialer = RootDialer::new(mesh, &storage);
 
         for cpu in 0..cpus {
+            dbg!(cpu);
+            // TODO(@miaxos): There are some links between those two, mb we
+            // should modelise it again.
             let config = self.clone();
-            let handle = std::thread::spawn(move || {
-                // info!("[Server] Spawned");
-                dbg!(cpu);
-                monoio::utils::bind_to_cpu_set(Some(cpu)).unwrap();
+            let handle = ServerMonoThreadedHandle::new(
+                config,
+                &main_dialer,
+                cpu,
+                &storage,
+            );
 
-                let mut rt = monoio::RuntimeBuilder::<Driver>::new()
-                    .with_entries(1024)
-                    .enable_timer()
-                    .build()
-                    .expect("Cannot build runtime");
-
-                rt.block_on(async move {
-                    // Initialize domain
-                    let storage = domain::storage::Storage::new();
-
-                    let listener = TcpListener::bind_with_config(
-                        config.bind_addr,
-                        &ListenerConfig::new(),
-                    )
-                    .expect("Couldn't listen to addr");
-
-                    loop {
-                        let storage = storage.clone();
-
-                        // listener.cancelable_accept(c)?
-                        // We accept the TCP Connection
-                        let (conn, _addr) = listener
-                            .accept()
-                            .await
-                            .expect("Unable to accept connections");
-
-                        conn.set_nodelay(true).unwrap();
-                        /*
-                        conn.set_tcp_keepalive(
-                            Some(Duration::from_secs(1)),
-                            None,
-                            None,
-                        )
-                        .unwrap();
-                        */
-
-                        // We map it to an `Handler` which is able to understand
-                        // the Redis protocol
-
-                        let _spawned = monoio::spawn(async move {
-                            let (connection, r) =
-                                WriteConnection::new(conn, 4 * 1024);
-
-                            let handler = Handler {
-                                connection,
-                                connection_r: r,
-                            };
-
-                            let ctx = Context::new(storage);
-
-                            if let Err(err) = handler.run(ctx).await {
-                                dbg!(err.backtrace());
-                                dbg!(&err);
-                                // error!(?err);
-                                panic!("blbl");
-                            }
-                            // handler.connection.stop().await.unwrap();
-                        });
-                    }
-                });
-            });
-            threads.push(handle);
+            threads.push(handle.initialize());
         }
 
         ServerHandle { threads }

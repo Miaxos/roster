@@ -5,6 +5,7 @@ use super::CommandExecution;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
+use crate::infrastructure::hash::crc_hash;
 
 /// Get the value of key. If the key does not exist the special value nil is
 /// returned. An error is returned if the value stored at key is not a string,
@@ -39,5 +40,9 @@ impl CommandExecution for Get {
         dst.write_frame(&response).await?;
 
         Ok(())
+    }
+
+    fn hash_key(&self) -> Option<u16> {
+        Some(crc_hash(self.key.as_bytes()))
     }
 }

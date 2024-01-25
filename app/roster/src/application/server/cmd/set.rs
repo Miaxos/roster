@@ -9,6 +9,7 @@ use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 use crate::domain::storage::SetOptions;
+use crate::infrastructure::hash::crc_hash;
 
 /// Set key to hold the string value. If key already holds a value, it is
 /// overwritten, regardless of its type.
@@ -126,11 +127,11 @@ impl CommandExecution for Set {
         let expired = self.expire.map(|dur| ctx.now() + dur.into());
 
         // let now = Instant::now();
-        let response = match ctx
-            .storage
-            .set_async(self.key, self.value, SetOptions { expired })
-            .await
-        {
+        let response = match ctx.storage.set_async(
+            self.key,
+            self.value,
+            SetOptions { expired },
+        ) {
             Ok(_) => Frame::Simple(OK_STR.clone()),
             Err(_) => Frame::Null,
         };
@@ -143,5 +144,9 @@ impl CommandExecution for Set {
         dst.write_frame(&response).await?;
 
         Ok(())
+    }
+
+    fn hash_key(&self) -> Option<u16> {
+        Some(crc_hash(self.key.as_bytes()))
     }
 }

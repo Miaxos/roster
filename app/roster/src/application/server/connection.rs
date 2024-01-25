@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::io::{self, Cursor};
 
 use bytes::BytesMut;
@@ -31,6 +32,12 @@ pub struct WriteConnection {
 pub struct ReadConnection {
     pub stream_r: BufReader<OwnedReadHalf<TcpStream>>,
     buffer: BytesMut,
+}
+
+impl Debug for ReadConnection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ReadConnection")
+    }
 }
 
 impl ReadConnection {
@@ -116,7 +123,9 @@ impl ReadConnection {
                 // left to `BytesMut`. This is often done by moving an internal
                 // cursor, but it may be done by reallocating and copying data.
                 // self.buffer.advance(len);
-                self.buffer.reserve(4 * 1024);
+                if self.buffer.len() < 1024 {
+                    self.buffer.reserve(4 * 1024);
+                }
 
                 // Return the parsed frame to the caller.
                 Ok(Some(frame))
@@ -134,6 +143,10 @@ impl ReadConnection {
             // in the connection being closed.
             Err(e) => Err(e.into()),
         }
+    }
+
+    pub fn into_inner(self) -> OwnedReadHalf<TcpStream> {
+        self.stream_r.into_inner()
     }
 }
 
@@ -243,5 +256,13 @@ impl WriteConnection {
         self.stream_w.write(b"\r\n").await.0?;
 
         Ok(())
+    }
+
+    pub fn into_inner(self) -> OwnedWriteHalf<TcpStream> {
+        self.stream_w.into_inner()
+    }
+
+    pub fn reunite(self, read: ReadConnection) -> TcpStream {
+        self.into_inner().reunite(read.into_inner()).unwrap()
     }
 }

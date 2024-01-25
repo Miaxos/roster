@@ -24,11 +24,13 @@ impl Cfg {
 
         let settings = Config::builder()
             .add_source(config::File::with_name(&file_location))
+            /*
             .add_source(
                 config::Environment::with_prefix("ROSTER")
                     .try_parsing(true)
                     .separator("_"),
             )
+            */
             .build()?;
 
         let config = settings.try_deserialize::<Cfg>()?;

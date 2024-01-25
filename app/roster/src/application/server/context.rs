@@ -2,20 +2,30 @@ use std::cell::Cell;
 
 use coarsetime::Instant;
 
-use crate::domain::storage::Storage;
+use crate::domain::storage::StorageSegment;
 
 #[derive(Clone)]
 pub struct Context {
-    pub storage: Storage,
+    pub storage: StorageSegment,
     now: Cell<bool>,
 }
 
 impl Context {
-    pub fn new(storage: Storage) -> Self {
+    pub fn new(storage: StorageSegment) -> Self {
         Self {
             storage,
             now: Cell::new(false),
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn is_in_slot(&self, hash: u16) -> bool {
+        self.storage.is_in_slot(hash)
+    }
+
+    pub fn slot_nb(&self, _hash: u16) -> Option<usize> {
+        todo!()
+        // self.storage.slot_nb(hash)
     }
 
     #[inline]
