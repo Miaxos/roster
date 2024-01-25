@@ -51,3 +51,9 @@ pub struct MetadataConnection {
     /// The associated ID for the connection
     pub id: u64,
 }
+
+impl MetadataConnection {
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+}

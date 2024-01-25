@@ -5,11 +5,13 @@ use crate::application::server::cmd::{Command, SubcommandRegistry};
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 
+mod id;
 mod set_info;
 
 #[derive(Debug)]
 pub enum Client {
     SetInfo(set_info::ClientSetInfo),
+    Id(id::ClientID),
 }
 
 impl SubcommandRegistry for Client {
@@ -20,6 +22,9 @@ impl SubcommandRegistry for Client {
             "setinfo" => Command::Client(Client::SetInfo(
                 set_info::ClientSetInfo::parse_frames(&mut parse)?,
             )),
+            "id" => Command::Client(Client::Id(id::ClientID::parse_frames(
+                &mut parse,
+            )?)),
             _ => {
                 // The command is not recognized and an Unknown command is
                 // returned.
@@ -49,6 +54,7 @@ impl CommandExecution for Client {
     ) -> anyhow::Result<()> {
         match self {
             Client::SetInfo(cmd) => cmd.apply(dst, ctx).await,
+            Client::Id(cmd) => cmd.apply(dst, ctx).await,
         }
     }
 }
