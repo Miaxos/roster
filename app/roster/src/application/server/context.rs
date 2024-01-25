@@ -18,6 +18,7 @@ impl Context {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_in_slot(&self, hash: u16) -> bool {
         self.storage.is_in_slot(hash)
     }
