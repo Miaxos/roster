@@ -123,7 +123,9 @@ impl ReadConnection {
                 // left to `BytesMut`. This is often done by moving an internal
                 // cursor, but it may be done by reallocating and copying data.
                 // self.buffer.advance(len);
-                self.buffer.reserve(4 * 1024);
+                if self.buffer.len() < 1024 {
+                    self.buffer.reserve(4 * 1024);
+                }
 
                 // Return the parsed frame to the caller.
                 Ok(Some(frame))

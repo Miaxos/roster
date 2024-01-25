@@ -127,11 +127,11 @@ impl CommandExecution for Set {
         let expired = self.expire.map(|dur| ctx.now() + dur.into());
 
         // let now = Instant::now();
-        let response = match ctx
-            .storage
-            .set_async(self.key, self.value, SetOptions { expired })
-            .await
-        {
+        let response = match ctx.storage.set_async(
+            self.key,
+            self.value,
+            SetOptions { expired },
+        ) {
             Ok(_) => Frame::Simple(OK_STR.clone()),
             Err(_) => Frame::Null,
         };

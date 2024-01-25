@@ -40,6 +40,8 @@ scc = "2"
 sharded-thread = "1"
 serde.workspace = true
 thiserror = "1"
+rand = "0.8"
+zstd = "0.13"
 
 # Logging
 tracing = { workspace = true, features = ["attributes"] }
@@ -62,6 +64,9 @@ tokio = { version = "1.35", features = [
   "io-util",
   "net",
 ] }
+
+[profile.release]
+debug = true
 
 [[bench]]
 name = "parsing"

@@ -34,6 +34,7 @@ impl ServerConfig {
     pub fn initialize(self) -> ServerHandle {
         let mut threads = Vec::new();
         let cpus: usize = std::thread::available_parallelism().unwrap().into();
+        // let cpus = 1;
 
         // The mesh used to pass a whole connection if needed.
         let mesh =
@@ -45,6 +46,7 @@ impl ServerConfig {
         let main_dialer = RootDialer::new(mesh, &storage);
 
         for cpu in 0..cpus {
+            dbg!(cpu);
             // TODO(@miaxos): There are some links between those two, mb we
             // should modelise it again.
             let config = self.clone();

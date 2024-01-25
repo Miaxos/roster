@@ -123,6 +123,7 @@ impl Handler {
 
                 let is_in_slot =
                     hash.map(|hash| ctx.is_in_slot(hash)).unwrap_or(true);
+                let is_in_slot = true;
 
                 if !is_in_slot {
                     let hash = hash.unwrap();
