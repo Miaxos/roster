@@ -3,12 +3,14 @@ use std::sync::Arc;
 
 use coarsetime::Instant;
 
-use super::supervisor::MetadataConnection;
+use super::supervisor::{MetadataConnection, Supervisor};
 use crate::domain::storage::StorageSegment;
 
+/// [Context] is available for the whole duration of the TCP Connection.
 #[derive(Clone)]
 pub struct Context {
     pub storage: StorageSegment,
+    pub supervisor: Supervisor,
     pub connection: Arc<MetadataConnection>,
     now: Cell<bool>,
 }
@@ -16,10 +18,12 @@ pub struct Context {
 impl Context {
     pub fn new(
         storage: StorageSegment,
+        supervisor: Supervisor,
         meta_conn: Arc<MetadataConnection>,
     ) -> Self {
         Self {
             storage,
+            supervisor,
             connection: meta_conn,
             now: Cell::new(false),
         }

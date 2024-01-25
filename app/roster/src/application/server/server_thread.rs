@@ -85,9 +85,10 @@ impl ServerMonoThreadedHandle {
                         .expect("Unable to accept connections");
 
                     let meta_conn = self.supervisor.assign_new_connection();
+                    let supervisor = self.supervisor.clone();
 
                     conn.set_nodelay(true).unwrap();
-                    let ctx = Context::new(storage, meta_conn);
+                    let ctx = Context::new(storage, supervisor, meta_conn);
 
                     // We map it to an `Handler` which is able to understand
                     // the Redis protocol
