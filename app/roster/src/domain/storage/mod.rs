@@ -1,14 +1,12 @@
 //! Storage primitive which is used to interact with Keys
 
 use std::hash::BuildHasherDefault;
-use std::mem::size_of_val;
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 
 use bytes::Bytes;
 use bytestring::ByteString;
 use coarsetime::Instant;
-use rand::random;
 use rustc_hash::FxHasher;
 use scc::HashMap;
 
