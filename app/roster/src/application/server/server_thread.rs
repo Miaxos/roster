@@ -66,6 +66,7 @@ impl ServerMonoThreadedHandle {
                 )?;
 
                 let shard = Rc::new(self.dial.shard);
+
                 // We initialize the listener on the TCP for this thread.
                 loop {
                     // TODO(@miaxos): Check cancellation
