@@ -53,7 +53,7 @@ impl AclCat {
     /// to execute a received command.
     pub(crate) async fn apply(
         self,
-        dst: &mut WriteConnection,
+        _dst: &mut WriteConnection,
         _ctx: Context,
     ) -> anyhow::Result<()> {
         unimplemented!()
