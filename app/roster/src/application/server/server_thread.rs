@@ -3,6 +3,7 @@ use std::thread::JoinHandle;
 
 use monoio::net::{ListenerConfig, TcpListener};
 
+use super::supervisor::Supervisor;
 use super::ServerConfig;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
@@ -28,6 +29,8 @@ pub struct ServerMonoThreadedHandle {
     cpu: usize,
     /// The [StorageSegment] for this thread.
     storage: StorageSegment,
+    /// The local supervisor
+    supervisor: Supervisor,
 }
 
 impl ServerMonoThreadedHandle {
@@ -35,6 +38,7 @@ impl ServerMonoThreadedHandle {
     pub fn new(
         config: ServerConfig,
         dialer: &RootDialer,
+        local_supervisor: &Supervisor,
         cpu: usize,
         storage: &Storage,
     ) -> Self {
@@ -44,6 +48,7 @@ impl ServerMonoThreadedHandle {
         Self {
             config,
             dial: dialer,
+            supervisor: local_supervisor.clone(),
             cpu,
             storage: storage_segment,
         }
@@ -79,8 +84,10 @@ impl ServerMonoThreadedHandle {
                         .await
                         .expect("Unable to accept connections");
 
+                    let meta_conn = self.supervisor.assign_new_connection();
+
                     conn.set_nodelay(true).unwrap();
-                    let ctx = Context::new(storage);
+                    let ctx = Context::new(storage, meta_conn);
 
                     // We map it to an `Handler` which is able to understand
                     // the Redis protocol

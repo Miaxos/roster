@@ -14,7 +14,10 @@ pub(crate) mod handle;
 mod cmd;
 mod server_thread;
 
+mod supervisor;
+
 use self::server_thread::ServerMonoThreadedHandle;
+use self::supervisor::Supervisor;
 use crate::application::server::handle::ConnectionMsg;
 use crate::domain::dialer::{RootDialer, Slot};
 use crate::domain::storage::Storage;
@@ -43,6 +46,7 @@ impl ServerConfig {
 
         let config_slot = Slot::from(0..HASH_SLOT_MAX);
         let storage = Storage::new(1, config_slot);
+        let supervisor = Supervisor::new(0);
         let main_dialer = RootDialer::new(mesh, &storage);
 
         for cpu in 0..cpus {
@@ -53,6 +57,7 @@ impl ServerConfig {
             let handle = ServerMonoThreadedHandle::new(
                 config,
                 &main_dialer,
+                &supervisor,
                 cpu,
                 &storage,
             );
