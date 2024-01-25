@@ -24,6 +24,7 @@ pub struct StorageValue {
 #[derive(Debug, Clone)]
 pub struct StorageSegment {
     db: Arc<HashMap<Vec<u8>, StorageValue, BuildHasherDefault<FxHasher>>>,
+    #[allow(dead_code)]
     slot: Slot,
     count: Arc<AtomicU32>,
 }
@@ -52,6 +53,7 @@ impl StorageSegment {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_in_slot(&self, i: u16) -> bool {
         self.slot.contains(&i)
     }
