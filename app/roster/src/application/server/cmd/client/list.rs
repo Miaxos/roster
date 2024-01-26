@@ -99,12 +99,14 @@ impl ClientList {
         dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
+        /*
         let id = ctx.connection.id();
 
         let response = Frame::Integer(id);
         dst.write_frame(&response).await?;
-
         Ok(())
+        */
+        unimplemented!()
     }
 }
 
@@ -139,7 +141,7 @@ mod tests {
         Client(
             List(
                 ClientList {
-                    type: NORMAL,
+                    type: Normal,
                     ids: Some(
                         [],
                     ),
@@ -157,7 +159,7 @@ mod tests {
         Client(
             List(
                 ClientList {
-                    type: NORMAL,
+                    type: Normal,
                     ids: Some(
                         [],
                     ),
@@ -175,7 +177,7 @@ mod tests {
         Client(
             List(
                 ClientList {
-                    type: MASTER,
+                    type: Master,
                     ids: Some(
                         [],
                     ),
@@ -193,7 +195,7 @@ mod tests {
         Client(
             List(
                 ClientList {
-                    type: REPLICA,
+                    type: Replica,
                     ids: Some(
                         [],
                     ),
@@ -211,7 +213,7 @@ mod tests {
         Client(
             List(
                 ClientList {
-                    type: PUBSUB,
+                    type: Pubsub,
                     ids: Some(
                         [],
                     ),
@@ -242,7 +244,7 @@ mod tests {
         Client(
             List(
                 ClientList {
-                    type: NORMAL,
+                    type: Normal,
                     ids: Some(
                         [
                             1,

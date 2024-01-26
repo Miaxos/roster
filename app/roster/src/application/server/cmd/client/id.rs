@@ -43,3 +43,40 @@ impl ClientID {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use bytes::BytesMut;
+    use redis_async::resp::{RespCodec, RespValue};
+    use redis_async::resp_array;
+    use tokio_util::codec::Encoder;
+
+    use crate::application::server::cmd::Command;
+    use crate::application::server::frame::Frame;
+
+    fn parse_cmd(obj: RespValue) -> anyhow::Result<Command> {
+        let mut bytes = BytesMut::new();
+        let mut codec = RespCodec;
+        codec.encode(obj, &mut bytes).unwrap();
+
+        let mut bytes = Cursor::new(bytes.freeze());
+        let frame = Frame::parse(&mut bytes)?;
+        let client_list = Command::from_frame(frame)?;
+        Ok(client_list)
+    }
+
+    #[test]
+    fn ensure_parsing() {
+        let entry: RespValue = resp_array!["CLIENT", "ID"];
+        let client_cmd = parse_cmd(entry).unwrap();
+        insta::assert_debug_snapshot!(client_cmd, @r###"
+        Client(
+            Id(
+                ClientID,
+            ),
+        )
+        "###);
+    }
+}
