@@ -40,35 +40,57 @@ impl ClientList {
     pub(crate) fn parse_frames(
         parse: &mut Parse,
     ) -> anyhow::Result<ClientList> {
-        let ty_opt = parse.next_string().map(|x| x.to_lowercase());
-        let ty = match ty_opt.as_ref().map(|x| &x[..]) {
-            Ok("normal") => ClientType::NORMAL,
-            Ok("replica") => ClientType::REPLICA,
-            Ok("master") => ClientType::MASTER,
-            Ok("pubsub") => ClientType::PUBSUB,
-            Ok(_) => {
-                bail!("should be either normal / replica / master / pubsub.");
-            }
-            Err(ParseError::EndOfStream) => ClientType::NORMAL,
-            Err(err) => {
-                bail!("{}", err);
-            }
-        };
-
+        let mut ty = ClientType::NORMAL;
         let mut ids = Vec::new();
+
         loop {
-            match parse.next_int() {
-                Ok(id) => {
-                    ids.push(id);
+            let key_filter = parse.next_string().map(|x| x.to_lowercase());
+            let key_filter_str = key_filter.as_ref().map(|x| &x[..]);
+            match key_filter_str {
+                Ok("type") => {
+                    let ty_opt = parse.next_string().map(|x| x.to_lowercase());
+                    ty = match ty_opt.as_ref().map(|x| &x[..]) {
+                        Ok("normal") => ClientType::NORMAL,
+                        Ok("replica") => ClientType::REPLICA,
+                        Ok("master") => ClientType::MASTER,
+                        Ok("pubsub") => ClientType::PUBSUB,
+                        Ok(_) => {
+                            bail!(
+                                "Unknown client type, should be either normal \
+                                 / replica / master / pubsub."
+                            );
+                        }
+                        Err(ParseError::EndOfStream) => ClientType::NORMAL,
+                        Err(err) => {
+                            bail!("{}", err);
+                        }
+                    };
+                }
+                Ok("id") => loop {
+                    match parse.next_int() {
+                        Ok(id) => {
+                            ids.push(id);
+                        }
+                        Err(ParseError::EndOfStream) => {
+                            break;
+                        }
+                        Err(err) => {
+                            bail!(err);
+                        }
+                    }
+                },
+                Ok(rest) => {
+                    bail!("Unknown filter type '{rest}'");
                 }
                 Err(ParseError::EndOfStream) => {
                     break;
                 }
                 Err(err) => {
-                    bail!(err);
+                    bail!("{}", err);
                 }
             }
         }
+
         Ok(ClientList::new(ty, Some(ids)))
     }
 
@@ -98,21 +120,21 @@ mod tests {
     use crate::application::server::cmd::Command;
     use crate::application::server::frame::Frame;
 
-    fn parse_cmd(obj: RespValue) -> Command {
+    fn parse_cmd(obj: RespValue) -> anyhow::Result<Command> {
         let mut bytes = BytesMut::new();
         let mut codec = RespCodec;
         codec.encode(obj, &mut bytes).unwrap();
 
         let mut bytes = Cursor::new(bytes.freeze());
-        let frame = Frame::parse(&mut bytes).unwrap();
-        let client_list = Command::from_frame(frame).unwrap();
-        client_list
+        let frame = Frame::parse(&mut bytes)?;
+        let client_list = Command::from_frame(frame)?;
+        Ok(client_list)
     }
 
     #[test]
     fn ensure_parsing_base() {
         let entry: RespValue = resp_array!["CLIENT", "LIST"];
-        let client_cmd = parse_cmd(entry);
+        let client_cmd = parse_cmd(entry).unwrap();
         insta::assert_debug_snapshot!(client_cmd, @r###"
         Client(
             List(
@@ -129,8 +151,8 @@ mod tests {
 
     #[test]
     fn ensure_parsing_normal() {
-        let entry: RespValue = resp_array!["CLIENT", "LIST", "NORMAL"];
-        let client_cmd = parse_cmd(entry);
+        let entry: RespValue = resp_array!["CLIENT", "LIST", "TYPE", "NORMAL"];
+        let client_cmd = parse_cmd(entry).unwrap();
         insta::assert_debug_snapshot!(client_cmd, @r###"
         Client(
             List(
@@ -147,8 +169,8 @@ mod tests {
 
     #[test]
     fn ensure_parsing_master() {
-        let entry: RespValue = resp_array!["CLIENT", "LIST", "MASTER"];
-        let client_cmd = parse_cmd(entry);
+        let entry: RespValue = resp_array!["CLIENT", "LIST", "TYPE", "MASTER"];
+        let client_cmd = parse_cmd(entry).unwrap();
         insta::assert_debug_snapshot!(client_cmd, @r###"
         Client(
             List(
@@ -165,8 +187,8 @@ mod tests {
 
     #[test]
     fn ensure_parsing_replica() {
-        let entry: RespValue = resp_array!["CLIENT", "LIST", "REPLICA"];
-        let client_cmd = parse_cmd(entry);
+        let entry: RespValue = resp_array!["CLIENT", "LIST", "TYPE", "REPLICA"];
+        let client_cmd = parse_cmd(entry).unwrap();
         insta::assert_debug_snapshot!(client_cmd, @r###"
         Client(
             List(
@@ -183,8 +205,8 @@ mod tests {
 
     #[test]
     fn ensure_parsing_pubsub() {
-        let entry: RespValue = resp_array!["CLIENT", "LIST", "PUBSUB"];
-        let client_cmd = parse_cmd(entry);
+        let entry: RespValue = resp_array!["CLIENT", "LIST", "TYPE", "PUBSUB"];
+        let client_cmd = parse_cmd(entry).unwrap();
         insta::assert_debug_snapshot!(client_cmd, @r###"
         Client(
             List(
@@ -192,6 +214,40 @@ mod tests {
                     type: PUBSUB,
                     ids: Some(
                         [],
+                    ),
+                },
+            ),
+        )
+        "###);
+    }
+
+    #[test]
+    fn ensure_parsing_fail() {
+        let entry: RespValue = resp_array!["CLIENT", "LIST", "TYPE", "FAIL"];
+        let client_cmd = parse_cmd(entry);
+        assert!(client_cmd.is_err());
+        insta::assert_debug_snapshot!(client_cmd, @r###"
+        Err(
+            "Unknown client type, should be either normal / replica / master / pubsub.",
+        )
+        "###);
+    }
+
+    #[test]
+    fn ensure_parsing_normal_id() {
+        let entry: RespValue =
+            resp_array!["CLIENT", "LIST", "TYPE", "NORMAL", "ID", 1, 2];
+        let client_cmd = parse_cmd(entry).unwrap();
+        insta::assert_debug_snapshot!(client_cmd, @r###"
+        Client(
+            List(
+                ClientList {
+                    type: NORMAL,
+                    ids: Some(
+                        [
+                            1,
+                            2,
+                        ],
                     ),
                 },
             ),
