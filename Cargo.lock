@@ -1456,6 +1456,7 @@ dependencies = [
  "sharded-thread",
  "thiserror",
  "tokio",
+ "tokio-util",
  "tracing",
  "tracing-subscriber",
  "zstd",

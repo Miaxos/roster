@@ -6,7 +6,11 @@ use scc::HashMap;
 /// [Supervisor] is the Applicative layer that allow you to interact with the
 /// connections currently open in roster.
 ///
-/// The [Supervisor] is local only, it's not a Global Supervisor.
+/// The [Supervisor] is local only for now, it's not a Global Supervisor.
+///
+/// What we could have is also the cluster inside the supervisor with the
+/// capability to synchronise the whole cluster together for the ACL & the
+/// connections data.
 ///
 /// **Should be cheap to clone**
 #[derive(Debug, Clone)]
