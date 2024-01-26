@@ -25,10 +25,10 @@ pub struct ClientList {
 #[derive(Debug, Default)]
 pub enum ClientType {
     #[default]
-    NORMAL,
-    REPLICA,
-    MASTER,
-    PUBSUB,
+    Normal,
+    Replica,
+    Master,
+    Pubsub,
 }
 
 impl ClientList {
@@ -40,7 +40,7 @@ impl ClientList {
     pub(crate) fn parse_frames(
         parse: &mut Parse,
     ) -> anyhow::Result<ClientList> {
-        let mut ty = ClientType::NORMAL;
+        let mut ty = ClientType::Normal;
         let mut ids = Vec::new();
 
         loop {
@@ -50,17 +50,17 @@ impl ClientList {
                 Ok("type") => {
                     let ty_opt = parse.next_string().map(|x| x.to_lowercase());
                     ty = match ty_opt.as_ref().map(|x| &x[..]) {
-                        Ok("normal") => ClientType::NORMAL,
-                        Ok("replica") => ClientType::REPLICA,
-                        Ok("master") => ClientType::MASTER,
-                        Ok("pubsub") => ClientType::PUBSUB,
+                        Ok("normal") => ClientType::Normal,
+                        Ok("replica") => ClientType::Replica,
+                        Ok("master") => ClientType::Master,
+                        Ok("pubsub") => ClientType::Pubsub,
                         Ok(_) => {
                             bail!(
                                 "Unknown client type, should be either normal \
                                  / replica / master / pubsub."
                             );
                         }
-                        Err(ParseError::EndOfStream) => ClientType::NORMAL,
+                        Err(ParseError::EndOfStream) => ClientType::Normal,
                         Err(err) => {
                             bail!("{}", err);
                         }
@@ -112,7 +112,7 @@ impl ClientList {
 mod tests {
     use std::io::Cursor;
 
-    use bytes::{Bytes, BytesMut};
+    use bytes::BytesMut;
     use redis_async::resp::{RespCodec, RespValue};
     use redis_async::resp_array;
     use tokio_util::codec::Encoder;
