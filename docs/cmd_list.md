@@ -1,4 +1,4 @@
-## Redis Compatibility Commands list
+# Redis Compatibility Commands list
 
 - [ ] ACL CAT
 - [ ] ACL DELUSER
