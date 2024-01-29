@@ -1,4 +1,5 @@
-use std::sync::atomic::AtomicU64;
+use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::sync::Arc;
 
 use scc::HashMap;
@@ -37,16 +38,51 @@ impl Supervisor {
 
     /// Assign a new connection to the [Supervisor] and return a
     /// [MetadataConnection]
-    pub fn assign_new_connection(&self) -> Arc<MetadataConnection> {
+    pub fn assign_new_connection(
+        &self,
+        addr: SocketAddr,
+        laddr: SocketAddr,
+        fd: i32,
+    ) -> Arc<MetadataConnection> {
         let id = self
             .current_id
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let conn = Arc::new(MetadataConnection { id });
+        let conn = Arc::new(MetadataConnection {
+            id,
+            kind: MetadataConnectionKind::NORMAL,
+            stopped: AtomicBool::new(false),
+            addr,
+            laddr,
+            fd,
+        });
         self.current_connections
             .insert(id, conn.clone())
             .expect("Can't fail");
         conn
     }
+
+    /// Get the list of [MetadataConnection] for normal connection.
+    pub async fn get_normal_connection(&self) -> Vec<Arc<MetadataConnection>> {
+        let mut result = Vec::new();
+
+        self.current_connections
+            .scan_async(|_, conn| {
+                let stopped =
+                    conn.stopped.load(std::sync::atomic::Ordering::Relaxed);
+
+                if !stopped && conn.kind == MetadataConnectionKind::NORMAL {
+                    result.push(conn.clone());
+                }
+            })
+            .await;
+
+        result
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum MetadataConnectionKind {
+    NORMAL,
 }
 
 /// [MetadataConnection] is where we store metadata about a Connection.
@@ -54,6 +90,24 @@ impl Supervisor {
 pub struct MetadataConnection {
     /// The associated ID for the connection
     pub id: u64,
+    /// Describe the connection kind
+    pub kind: MetadataConnectionKind,
+    /// Tell if the connection is stopped
+    pub stopped: AtomicBool,
+    /// Address/Port of the client
+    pub addr: SocketAddr,
+    /// address/port of local address client connected to (bind address)
+    pub laddr: SocketAddr,
+    /// file descriptor corresponding to the socket
+    pub fd: i32,
+}
+
+impl MetadataConnection {
+    /// Indicate this connection is stopped.
+    pub fn stop(&self) {
+        self.stopped
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
 }
 
 impl MetadataConnection {

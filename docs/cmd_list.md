@@ -40,6 +40,8 @@
 - [ ] CLIENT INFO
 - [ ] CLIENT KILL
 - [ ] CLIENT LIST
+  A lot is missing right now but it's partially working, not every arguments are
+  supported yet.
 - [ ] CLIENT NO EVICT
 - [ ] CLIENT NO TOUCH
 - [ ] CLIENT PAUSE

@@ -1,4 +1,5 @@
 use anyhow::bail;
+use bytestring::ByteString;
 
 use super::super::parse::Parse;
 use crate::application::server::cmd::parse::ParseError;
@@ -99,14 +100,26 @@ impl ClientList {
         dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
-        /*
-        let id = ctx.connection.id();
+        let connections = ctx.supervisor.get_normal_connection().await;
 
-        let response = Frame::Integer(id);
+        // TODO(@miaxos): lot of things missing here
+        let conn_frames = connections
+            .into_iter()
+            .map(|x| {
+                ByteString::from(format!(
+                    "id={id} addr={addr} laddr={laddr} fd={fd}",
+                    id = &x.id,
+                    addr = &x.addr,
+                    laddr = &x.laddr,
+                    fd = &x.fd
+                ))
+            })
+            .map(Frame::Simple)
+            .collect();
+
+        let response = Frame::Array(conn_frames);
         dst.write_frame(&response).await?;
         Ok(())
-        */
-        unimplemented!()
     }
 }
 
