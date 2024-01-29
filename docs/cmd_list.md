@@ -36,7 +36,7 @@
 - [ ] CLIENT GETNAME
 - [ ] CLIENT GETREDIR
 - [ ] CLIENT HELP
-- [ ] CLIENT ID
+- [x] CLIENT ID
 - [ ] CLIENT INFO
 - [ ] CLIENT KILL
 - [ ] CLIENT LIST
@@ -137,7 +137,7 @@
 - [ ] GEORADIUSBYMEMBER_RO
 - [ ] GEOSEARCH
 - [ ] GEOSEARCHSTORE
-- [ ] GET
+- [x] GET
 - [ ] GETBIT
 - [ ] GETDEL
 - [ ] GETEX
@@ -224,7 +224,7 @@
 - [ ] PFDEBUG
 - [ ] PFMERGE
 - [ ] PFSELFTEST
-- [ ] PING
+- [x] PING
 - [ ] PSETEX
 - [ ] PSUBSCRIBE
 - [ ] PSYNC
