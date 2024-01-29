@@ -53,6 +53,8 @@ between our two instances, as for Redis & Dragonfly.
 
 - Only the RESP3 is wanted for now.
 
+The full list of implemented commands can be checked [here](./docs/cmd_list.md).
+
 ## Architecture
 
 ### Performance
