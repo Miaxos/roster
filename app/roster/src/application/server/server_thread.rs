@@ -1,8 +1,10 @@
+use std::os::fd::AsRawFd;
 use std::rc::Rc;
 use std::thread::JoinHandle;
 
 use monoio::net::{ListenerConfig, TcpListener};
 
+use super::supervisor::Supervisor;
 use super::ServerConfig;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
@@ -28,6 +30,8 @@ pub struct ServerMonoThreadedHandle {
     cpu: usize,
     /// The [StorageSegment] for this thread.
     storage: StorageSegment,
+    /// The local supervisor
+    supervisor: Supervisor,
 }
 
 impl ServerMonoThreadedHandle {
@@ -35,6 +39,7 @@ impl ServerMonoThreadedHandle {
     pub fn new(
         config: ServerConfig,
         dialer: &RootDialer,
+        local_supervisor: &Supervisor,
         cpu: usize,
         storage: &Storage,
     ) -> Self {
@@ -44,6 +49,7 @@ impl ServerMonoThreadedHandle {
         Self {
             config,
             dial: dialer,
+            supervisor: local_supervisor.clone(),
             cpu,
             storage: storage_segment,
         }
@@ -74,13 +80,21 @@ impl ServerMonoThreadedHandle {
                     let shard = shard.clone();
 
                     // We accept the TCP Connection
-                    let (conn, _addr) = listener
+                    let (conn, addr) = listener
                         .accept()
                         .await
                         .expect("Unable to accept connections");
 
+                    let laddr = conn.local_addr()?;
+                    let fd = conn.as_raw_fd();
+
+                    let meta_conn =
+                        self.supervisor.assign_new_connection(addr, laddr, fd);
+                    let supervisor = self.supervisor.clone();
+
                     conn.set_nodelay(true).unwrap();
-                    let ctx = Context::new(storage);
+                    let ctx =
+                        Context::new(storage, supervisor, meta_conn.clone());
 
                     // We map it to an `Handler` which is able to understand
                     // the Redis protocol
@@ -100,6 +114,8 @@ impl ServerMonoThreadedHandle {
                             // error!(?err);
                             panic!("blbl");
                         }
+
+                        meta_conn.stop();
                         // handler.connection.stop().await.unwrap();
                     });
                 }

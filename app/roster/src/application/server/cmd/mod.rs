@@ -1,3 +1,4 @@
+use self::acl::Acl;
 use self::client::Client;
 use self::get::Get;
 use self::parse::Parse;
@@ -10,6 +11,7 @@ use super::frame::Frame;
 
 mod parse;
 
+mod acl;
 mod client;
 mod get;
 mod ping;
@@ -21,6 +23,7 @@ mod unknown;
 /// Methods called on `Command` are delegated to the command implementation.
 #[derive(Debug)]
 pub enum Command {
+    Acl(Acl),
     Client(Client),
     Ping(Ping),
     Set(Set),
@@ -55,6 +58,14 @@ pub trait SubcommandRegistry {
     ///
     /// On success, the command value is returned, otherwise, `Err` is returned.
     fn from_parse(parse: Parse) -> anyhow::Result<Command>;
+
+    /// Show help for this subcommand.
+    async fn help(
+        _dst: &mut WriteConnection,
+        _ctx: Context,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 impl Command {
@@ -82,6 +93,9 @@ impl Command {
         // Match the command name, delegating the rest of the parsing to the
         // specific command.
         let command = match &command_name[..] {
+            "acl" => {
+                return Acl::from_parse(parse);
+            }
             "client" => {
                 return Client::from_parse(parse);
             }
@@ -118,6 +132,7 @@ impl CommandExecution for Command {
         use Command::*;
 
         match self {
+            Acl(cmd) => cmd.apply(dst, ctx).await,
             Ping(cmd) => cmd.apply(dst, ctx).await,
             Unknown(cmd) => cmd.apply(dst, ctx).await,
             Client(cmd) => cmd.apply(dst, ctx).await,
@@ -130,6 +145,7 @@ impl CommandExecution for Command {
         use Command::*;
 
         match self {
+            Acl(cmd) => cmd.hash_key(),
             Ping(cmd) => cmd.hash_key(),
             Unknown(cmd) => cmd.hash_key(),
             Client(cmd) => cmd.hash_key(),

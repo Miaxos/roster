@@ -103,18 +103,6 @@ impl ClientSetInfo {
         _ctx: Context,
     ) -> anyhow::Result<()> {
         monoio::time::sleep(Duration::from_secs(3)).await;
-        /*
-        let response = match self.msg {
-            None => Frame::Simple("PONG".to_string()),
-            Some(msg) => Frame::Bulk(msg),
-        };
-
-        info!(?response);
-
-        // Write the response back to the client
-        dst.write_frame(&response).await?;
-
-            */
 
         let response = Frame::Simple(ByteString::from_static("OK"));
         dst.write_frame(&response).await?;

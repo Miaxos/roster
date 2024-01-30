@@ -1,0 +1,380 @@
+# Redis Compatibility Commands list
+
+It only shows which commands are present in the code, not if the command is
+properly working yet.
+
+If a command is not properly working, feel free to check the associated issue of
+the command or open an issue.
+
+- [ ] ACL CAT
+- [ ] ACL DELUSER
+- [ ] ACL DRYRUN
+- [ ] ACL GENPASS
+- [ ] ACL GETUSER
+- [ ] ACL HELP
+- [ ] ACL LIST
+- [ ] ACL LOAD
+- [ ] ACL LOG
+- [ ] ACL SAVE
+- [ ] ACL SETUSER
+- [ ] ACL USERS
+- [ ] ACL WHOAMI
+- [ ] ACL
+- [ ] APPEND
+- [ ] ASKING
+- [ ] AUTH
+- [ ] BGREWRITEAOF
+- [ ] BGSAVE
+- [ ] BITCOUNT
+- [ ] BITFIELD
+- [ ] BITFIELD_RO
+- [ ] BITOP
+- [ ] BITPOS
+- [ ] BLMOVE
+- [ ] BLMPOP
+- [ ] BLPOP
+- [ ] BRPOP
+- [ ] BRPOPLPUSH
+- [ ] BZMPOP
+- [ ] BZPOPMAX
+- [ ] BZPOPMIN
+- [ ] CLIENT CACHING
+- [ ] CLIENT GETNAME
+- [ ] CLIENT GETREDIR
+- [x] CLIENT HELP
+- [x] CLIENT ID
+- [ ] CLIENT INFO
+- [ ] CLIENT KILL
+- [ ] CLIENT LIST
+  A lot is missing right now but it's partially working, not every arguments are
+  supported yet.
+- [ ] CLIENT NO EVICT
+- [ ] CLIENT NO TOUCH
+- [ ] CLIENT PAUSE
+- [ ] CLIENT REPLY
+- [ ] CLIENT SETINFO
+- [ ] CLIENT SETNAME
+- [ ] CLIENT TRACKING
+- [ ] CLIENT TRACKINGINFO
+- [ ] CLIENT UNBLOCK
+- [ ] CLIENT UNPAUSE
+- [x] CLIENT
+- [ ] CLUSTER ADDSLOTS
+- [ ] CLUSTER ADDSLOTSRANGE
+- [ ] CLUSTER BUMPEPOCH
+- [ ] CLUSTER COUNT FAILURE REPORTS
+- [ ] CLUSTER COUNTKEYSINSLOT
+- [ ] CLUSTER DELSLOTS
+- [ ] CLUSTER DELSLOTSRANGE
+- [ ] CLUSTER FAILOVER
+- [ ] CLUSTER FLUSHSLOTS
+- [ ] CLUSTER FORGET
+- [ ] CLUSTER GETKEYSINSLOT
+- [ ] CLUSTER HELP
+- [ ] CLUSTER INFO
+- [ ] CLUSTER KEYSLOT
+- [ ] CLUSTER LINKS
+- [ ] CLUSTER MEET
+- [ ] CLUSTER MYID
+- [ ] CLUSTER MYSHARDID
+- [ ] CLUSTER NODES
+- [ ] CLUSTER REPLICAS
+- [ ] CLUSTER REPLICATE
+- [ ] CLUSTER RESET
+- [ ] CLUSTER SAVECONFIG
+- [ ] CLUSTER SET CONFIG EPOCH
+- [ ] CLUSTER SETSLOT
+- [ ] CLUSTER SHARDS
+- [ ] CLUSTER SLAVES
+- [ ] CLUSTER SLOTS
+- [ ] CLUSTER
+- [ ] COMMAND COUNT
+- [ ] COMMAND DOCS
+- [ ] COMMAND GETKEYS
+- [ ] COMMAND GETKEYSANDFLAGS
+- [ ] COMMAND HELP
+- [ ] COMMAND INFO
+- [ ] COMMAND LIST
+- [ ] COMMAND
+- [ ] CONFIG GET
+- [ ] CONFIG HELP
+- [ ] CONFIG RESETSTAT
+- [ ] CONFIG REWRITE
+- [ ] CONFIG SET
+- [ ] CONFIG
+- [ ] COPY
+- [ ] DBSIZE
+- [ ] DEBUG
+- [ ] DECR
+- [ ] DECRBY
+- [ ] DEL
+- [ ] DISCARD
+- [ ] DUMP
+- [ ] ECHO
+- [ ] EVAL
+- [ ] EVAL_RO
+- [ ] EVALSHA
+- [ ] EVALSHA_RO
+- [ ] EXEC
+- [ ] EXISTS
+- [ ] EXPIRE
+- [ ] EXPIREAT
+- [ ] EXPIRETIME
+- [ ] FAILOVER
+- [ ] FCALL
+- [ ] FCALL_RO
+- [ ] FLUSHALL
+- [ ] FLUSHDB
+- [ ] FUNCTION DELETE
+- [ ] FUNCTION DUMP
+- [ ] FUNCTION FLUSH
+- [ ] FUNCTION HELP
+- [ ] FUNCTION KILL
+- [ ] FUNCTION LIST
+- [ ] FUNCTION LOAD
+- [ ] FUNCTION RESTORE
+- [ ] FUNCTION STATS
+- [ ] FUNCTION
+- [ ] GEOADD
+- [ ] GEODIST
+- [ ] GEOHASH
+- [ ] GEOPOS
+- [ ] GEORADIUS
+- [ ] GEORADIUS_RO
+- [ ] GEORADIUSBYMEMBER
+- [ ] GEORADIUSBYMEMBER_RO
+- [ ] GEOSEARCH
+- [ ] GEOSEARCHSTORE
+- [x] GET
+- [ ] GETBIT
+- [ ] GETDEL
+- [ ] GETEX
+- [ ] GETRANGE
+- [ ] GETSET
+- [ ] HDEL
+- [ ] HELLO
+- [ ] HEXISTS
+- [ ] HGET
+- [ ] HGETALL
+- [ ] HINCRBY
+- [ ] HINCRBYFLOAT
+- [ ] HKEYS
+- [ ] HLEN
+- [ ] HMGET
+- [ ] HMSET
+- [ ] HRANDFIELD
+- [ ] HSCAN
+- [ ] HSET
+- [ ] HSETNX
+- [ ] HSTRLEN
+- [ ] HVALS
+- [ ] INCR
+- [ ] INCRBY
+- [ ] INCRBYFLOAT
+- [ ] INFO
+- [ ] KEYS
+- [ ] LASTSAVE
+- [ ] LATENCY DOCTOR
+- [ ] LATENCY GRAPH
+- [ ] LATENCY HELP
+- [ ] LATENCY HISTOGRAM
+- [ ] LATENCY HISTORY
+- [ ] LATENCY LATEST
+- [ ] LATENCY RESET
+- [ ] LATENCY
+- [ ] LCS
+- [ ] LINDEX
+- [ ] LINSERT
+- [ ] LLEN
+- [ ] LMOVE
+- [ ] LMPOP
+- [ ] LOLWUT
+- [ ] LPOP
+- [ ] LPOS
+- [ ] LPUSH
+- [ ] LPUSHX
+- [ ] LRANGE
+- [ ] LREM
+- [ ] LSET
+- [ ] LTRIM
+- [ ] MEMORY DOCTOR
+- [ ] MEMORY HELP
+- [ ] MEMORY MALLOC STATS
+- [ ] MEMORY PURGE
+- [ ] MEMORY STATS
+- [ ] MEMORY USAGE
+- [ ] MEMORY
+- [ ] MGET
+- [ ] MIGRATE
+- [ ] MODULE HELP
+- [ ] MODULE LIST
+- [ ] MODULE LOAD
+- [ ] MODULE LOADEX
+- [ ] MODULE UNLOAD
+- [ ] MODULE
+- [ ] MONITOR
+- [ ] MOVE
+- [ ] MSET
+- [ ] MSETNX
+- [ ] MULTI
+- [ ] OBJECT ENCODING
+- [ ] OBJECT FREQ
+- [ ] OBJECT HELP
+- [ ] OBJECT IDLETIME
+- [ ] OBJECT REFCOUNT
+- [ ] OBJECT
+- [ ] PERSIST
+- [ ] PEXPIRE
+- [ ] PEXPIREAT
+- [ ] PEXPIRETIME
+- [ ] PFADD
+- [ ] PFCOUNT
+- [ ] PFDEBUG
+- [ ] PFMERGE
+- [ ] PFSELFTEST
+- [x] PING
+- [ ] PSETEX
+- [ ] PSUBSCRIBE
+- [ ] PSYNC
+- [ ] PTTL
+- [ ] PUBLISH
+- [ ] PUBSUB CHANNELS
+- [ ] PUBSUB HELP
+- [ ] PUBSUB NUMPAT
+- [ ] PUBSUB NUMSUB
+- [ ] PUBSUB SHARDCHANNELS
+- [ ] PUBSUB SHARDNUMSUB
+- [ ] PUBSUB
+- [ ] PUNSUBSCRIBE
+- [ ] QUIT
+- [ ] RANDOMKEY
+- [ ] READONLY
+- [ ] READWRITE
+- [ ] RENAME
+- [ ] RENAMENX
+- [ ] REPLCONF
+- [ ] REPLICAOF
+- [ ] RESET
+- [ ] RESTORE ASKING
+- [ ] RESTORE
+- [ ] ROLE
+- [ ] RPOP
+- [ ] RPOPLPUSH
+- [ ] RPUSH
+- [ ] RPUSHX
+- [ ] SADD
+- [ ] SAVE
+- [ ] SCAN
+- [ ] SCARD
+- [ ] SCRIPT DEBUG
+- [ ] SCRIPT EXISTS
+- [ ] SCRIPT FLUSH
+- [ ] SCRIPT HELP
+- [ ] SCRIPT KILL
+- [ ] SCRIPT LOAD
+- [ ] SCRIPT
+- [ ] SDIFF
+- [ ] SDIFFSTORE
+- [ ] SELECT
+- [ ] SET
+- [ ] SETBIT
+- [ ] SETEX
+- [ ] SETNX
+- [ ] SETRANGE
+- [ ] SHUTDOWN
+- [ ] SINTER
+- [ ] SINTERCARD
+- [ ] SINTERSTORE
+- [ ] SISMEMBER
+- [ ] SLAVEOF
+- [ ] SLOWLOG GET
+- [ ] SLOWLOG HELP
+- [ ] SLOWLOG LEN
+- [ ] SLOWLOG RESET
+- [ ] SLOWLOG
+- [ ] SMEMBERS
+- [ ] SMISMEMBER
+- [ ] SMOVE
+- [ ] SORT
+- [ ] SORT_RO
+- [ ] SPOP
+- [ ] SPUBLISH
+- [ ] SRANDMEMBER
+- [ ] SREM
+- [ ] SSCAN
+- [ ] SSUBSCRIBE
+- [ ] STRLEN
+- [ ] SUBSCRIBE
+- [ ] SUBSTR
+- [ ] SUNION
+- [ ] SUNIONSTORE
+- [ ] SUNSUBSCRIBE
+- [ ] SWAPDB
+- [ ] SYNC
+- [ ] TIME
+- [ ] TOUCH
+- [ ] TTL
+- [ ] TYPE
+- [ ] UNLINK
+- [ ] UNSUBSCRIBE
+- [ ] UNWATCH
+- [ ] WAIT
+- [ ] WAITAOF
+- [ ] WATCH
+- [ ] XACK
+- [ ] XADD
+- [ ] XAUTOCLAIM
+- [ ] XCLAIM
+- [ ] XDEL
+- [ ] XGROUP CREATE
+- [ ] XGROUP CREATECONSUMER
+- [ ] XGROUP DELCONSUMER
+- [ ] XGROUP DESTROY
+- [ ] XGROUP HELP
+- [ ] XGROUP SETID
+- [ ] XGROUP
+- [ ] XINFO CONSUMERS
+- [ ] XINFO GROUPS
+- [ ] XINFO HELP
+- [ ] XINFO STREAM
+- [ ] XINFO
+- [ ] XLEN
+- [ ] XPENDING
+- [ ] XRANGE
+- [ ] XREAD
+- [ ] XREADGROUP
+- [ ] XREVRANGE
+- [ ] XSETID
+- [ ] XTRIM
+- [ ] ZADD
+- [ ] ZCARD
+- [ ] ZCOUNT
+- [ ] ZDIFF
+- [ ] ZDIFFSTORE
+- [ ] ZINCRBY
+- [ ] ZINTER
+- [ ] ZINTERCARD
+- [ ] ZINTERSTORE
+- [ ] ZLEXCOUNT
+- [ ] ZMPOP
+- [ ] ZMSCORE
+- [ ] ZPOPMAX
+- [ ] ZPOPMIN
+- [ ] ZRANDMEMBER
+- [ ] ZRANGE
+- [ ] ZRANGEBYLEX
+- [ ] ZRANGEBYSCORE
+- [ ] ZRANGESTORE
+- [ ] ZRANK
+- [ ] ZREM
+- [ ] ZREMRANGEBYLEX
+- [ ] ZREMRANGEBYRANK
+- [ ] ZREMRANGEBYSCORE
+- [ ] ZREVRANGE
+- [ ] ZREVRANGEBYLEX
+- [ ] ZREVRANGEBYSCORE
+- [ ] ZREVRANK
+- [ ] ZSCAN
+- [ ] ZSCORE
+- [ ] ZUNION
+- [ ] ZUNIONSTORE

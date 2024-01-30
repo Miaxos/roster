@@ -39,7 +39,7 @@ pub async fn connect_without_auth(
 ) -> redis_async::client::PairedConnection {
     use tokio::time::Duration;
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_millis(1_000)).await;
     redis_async::client::paired_connect(addr.ip().to_string(), addr.port())
         .await
         .unwrap()
