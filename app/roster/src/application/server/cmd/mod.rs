@@ -58,6 +58,14 @@ pub trait SubcommandRegistry {
     ///
     /// On success, the command value is returned, otherwise, `Err` is returned.
     fn from_parse(parse: Parse) -> anyhow::Result<Command>;
+
+    /// Show help for this subcommand.
+    async fn help(
+        dst: &mut WriteConnection,
+        ctx: Context,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 impl Command {
