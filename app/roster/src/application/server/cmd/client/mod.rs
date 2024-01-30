@@ -30,6 +30,8 @@ LIST [options ...]
     Return information about client connections. Options:
     * TYPE (NORMAL|MASTER|REPLICA|PUBSUB)
       Return clients of specified type.
+SETNAME <name>
+    Assign the name <name> to the current connection.
 SETINFO <option> <value>
     Set client meta attr. Options are:
     * LIB-NAME: the client lib name.
