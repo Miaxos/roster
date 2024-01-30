@@ -1,7 +1,9 @@
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, AtomicU64};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, OnceLock};
 
+use bytestring::ByteString;
+use futures_locks::RwLock;
 use scc::HashMap;
 
 /// [Supervisor] is the Applicative layer that allow you to interact with the
@@ -51,6 +53,7 @@ impl Supervisor {
             id,
             kind: MetadataConnectionKind::Normal,
             stopped: AtomicBool::new(false),
+            name: RwLock::new(None),
             addr,
             laddr,
             fd,
@@ -92,6 +95,8 @@ pub struct MetadataConnection {
     pub id: u64,
     /// Describe the connection kind
     pub kind: MetadataConnectionKind,
+    /// the name set by the client with CLIENT SETNAME
+    name: RwLock<Option<ByteString>>,
     /// Tell if the connection is stopped
     pub stopped: AtomicBool,
     /// Address/Port of the client
@@ -107,6 +112,17 @@ impl MetadataConnection {
     pub fn stop(&self) {
         self.stopped
             .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Set the name of the connection
+    pub async fn set_name(&self, name: ByteString) {
+        let mut lock = self.name.write().await;
+        *lock = Some(name);
+    }
+
+    /// Set the name of the connection
+    pub async fn name(&self) -> Option<ByteString> {
+        self.name.read().await.clone()
     }
 }
 
