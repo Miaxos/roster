@@ -65,11 +65,15 @@ impl ServerConfig {
             threads.push(handle.initialize());
         }
 
-        ServerHandle { threads }
+        ServerHandle {
+            bind: self.bind_addr,
+            threads,
+        }
     }
 }
 
 pub struct ServerHandle {
+    pub bind: SocketAddr,
     threads: Vec<JoinHandle<()>>,
 }
 
