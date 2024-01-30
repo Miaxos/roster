@@ -49,7 +49,7 @@ impl Supervisor {
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let conn = Arc::new(MetadataConnection {
             id,
-            kind: MetadataConnectionKind::NORMAL,
+            kind: MetadataConnectionKind::Normal,
             stopped: AtomicBool::new(false),
             addr,
             laddr,
@@ -70,7 +70,7 @@ impl Supervisor {
                 let stopped =
                     conn.stopped.load(std::sync::atomic::Ordering::Relaxed);
 
-                if !stopped && conn.kind == MetadataConnectionKind::NORMAL {
+                if !stopped && conn.kind == MetadataConnectionKind::Normal {
                     result.push(conn.clone());
                 }
             })
@@ -82,7 +82,7 @@ impl Supervisor {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum MetadataConnectionKind {
-    NORMAL,
+    Normal,
 }
 
 /// [MetadataConnection] is where we store metadata about a Connection.

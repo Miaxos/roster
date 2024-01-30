@@ -1,5 +1,11 @@
 # Redis Compatibility Commands list
 
+It only shows which commands are present in the code, not if the command is
+properly working yet.
+
+If a command is not properly working, feel free to check the associated issue of
+the command or open an issue.
+
 - [ ] ACL CAT
 - [ ] ACL DELUSER
 - [ ] ACL DRYRUN

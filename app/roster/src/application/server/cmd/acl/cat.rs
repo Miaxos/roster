@@ -11,6 +11,7 @@ use crate::application::server::context::Context;
 /// ACL CAT [category]
 #[derive(Debug, Default)]
 pub struct AclCat {
+    #[allow(dead_code)]
     category: Option<ByteString>,
 }
 

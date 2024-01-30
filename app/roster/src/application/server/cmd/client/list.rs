@@ -19,7 +19,9 @@ use crate::application::server::frame::Frame;
 /// client-id arguments.
 #[derive(Debug, Default)]
 pub struct ClientList {
+    #[allow(dead_code)]
     r#type: ClientType,
+    #[allow(dead_code)]
     ids: Option<Vec<u64>>,
 }
 

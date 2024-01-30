@@ -61,8 +61,8 @@ pub trait SubcommandRegistry {
 
     /// Show help for this subcommand.
     async fn help(
-        dst: &mut WriteConnection,
-        ctx: Context,
+        _dst: &mut WriteConnection,
+        _ctx: Context,
     ) -> anyhow::Result<()> {
         Ok(())
     }
