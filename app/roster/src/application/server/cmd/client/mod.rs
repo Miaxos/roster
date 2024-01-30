@@ -9,11 +9,13 @@ use crate::application::server::frame::Frame;
 mod id;
 mod list;
 mod set_info;
+mod set_name;
 
 #[derive(Debug)]
 pub enum Client {
     Help,
     SetInfo(set_info::ClientSetInfo),
+    SetName(set_name::ClientSetName),
     List(list::ClientList),
     Id(id::ClientID),
 }
@@ -28,6 +30,8 @@ LIST [options ...]
     Return information about client connections. Options:
     * TYPE (NORMAL|MASTER|REPLICA|PUBSUB)
       Return clients of specified type.
+SETNAME <name>
+    Assign the name <name> to the current connection.
 SETINFO <option> <value>
     Set client meta attr. Options are:
     * LIB-NAME: the client lib name.
@@ -53,6 +57,9 @@ impl SubcommandRegistry for Client {
         let command = match &sub_command_name[..] {
             "setinfo" => Command::Client(Client::SetInfo(
                 set_info::ClientSetInfo::parse_frames(&mut parse)?,
+            )),
+            "setname" => Command::Client(Client::SetName(
+                set_name::ClientSetName::parse_frames(&mut parse)?,
             )),
             "id" => Command::Client(Client::Id(id::ClientID::parse_frames(
                 &mut parse,
@@ -105,6 +112,7 @@ impl CommandExecution for Client {
         match self {
             Client::Help => Client::help(dst, ctx).await,
             Client::SetInfo(cmd) => cmd.apply(dst, ctx).await,
+            Client::SetName(cmd) => cmd.apply(dst, ctx).await,
             Client::Id(cmd) => cmd.apply(dst, ctx).await,
             Client::List(cmd) => cmd.apply(dst, ctx).await,
         }

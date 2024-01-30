@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bytes::Bytes;
 use bytestring::ByteString;
 
@@ -102,8 +100,6 @@ impl ClientSetInfo {
         dst: &mut WriteConnection,
         _ctx: Context,
     ) -> anyhow::Result<()> {
-        monoio::time::sleep(Duration::from_secs(3)).await;
-
         let response = Frame::Simple(ByteString::from_static("OK"));
         dst.write_frame(&response).await?;
 

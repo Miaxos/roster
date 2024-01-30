@@ -105,19 +105,17 @@ impl ClientList {
         let connections = ctx.supervisor.get_normal_connection().await;
 
         // TODO(@miaxos): lot of things missing here
-        let conn_frames = connections
-            .into_iter()
-            .map(|x| {
-                ByteString::from(format!(
-                    "id={id} addr={addr} laddr={laddr} fd={fd}",
-                    id = &x.id,
-                    addr = &x.addr,
-                    laddr = &x.laddr,
-                    fd = &x.fd
-                ))
-            })
-            .map(Frame::Simple)
-            .collect();
+        let mut conn_frames = Vec::with_capacity(connections.len());
+        for conn in connections {
+            conn_frames.push(Frame::Simple(ByteString::from(format!(
+                "id={id} addr={addr} laddr={laddr} fd={fd} name={name}",
+                id = &conn.id,
+                addr = &conn.addr,
+                laddr = &conn.laddr,
+                fd = &conn.fd,
+                name = &conn.name().await.unwrap_or(ByteString::new()),
+            ))));
+        }
 
         let response = Frame::Array(conn_frames);
         dst.write_frame(&response).await?;

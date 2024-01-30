@@ -33,6 +33,7 @@ config.workspace = true
 derive_builder.workspace = true
 dotenv.workspace = true
 futures = "0.3"
+futures-locks = "0.7"
 local-sync = "0.1"
 monoio = { workspace = true, features = ["bytes", "sync", "iouring"] }
 rustc-hash = "1.1.0"
