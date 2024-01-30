@@ -9,6 +9,13 @@ use application::server::ServerConfigBuilder;
 use infrastructure::config::Cfg;
 // use infrastructure::instruments::Instruments;
 
+#[cfg(debug_assertions)]
+pub const VERSION: &str =
+    concat!("(dev) ", env!("CARGO_PKG_VERSION"), "-", env!("GIT_HASH"),);
+
+#[cfg(not(debug_assertions))]
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() -> anyhow::Result<()> {
     // Initialize config
     let config = Cfg::from_env()?;
@@ -51,11 +58,11 @@ fn main() -> anyhow::Result<()> {
          / |
        ~` ~"'
         "###,
-        version = "local",
+        version = VERSION,
         mode = "standalone",
-        port = "12345",
-        addr = "local",
-        pid = "no"
+        port = server.bind.port(),
+        addr = server.bind.ip(),
+        pid = std::process::id()
     );
 
     server.join();
