@@ -1450,6 +1450,7 @@ dependencies = [
  "pprof",
  "rand",
  "redis-async",
+ "regex",
  "rustc-hash",
  "scc",
  "serde",
