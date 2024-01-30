@@ -31,6 +31,33 @@ fn main() -> anyhow::Result<()> {
         .expect("Couldn't create the config")
         .initialize();
 
+    // From: https://ascii.co.uk/art/rooster
+    println!(
+        r###"
+                      ~-.
+    ,,,;            ~-.~-.~-            Roster {version}
+   (.../           ~-.~-.~-.~-.~-.
+   }} o~`,         ~-.~-.~-.~-.~-.~-.    Running in {mode} mode
+   (/    \      ~-.~-.~-.~-.~-.~-.~-.   Port: {port}
+    ;    \    ~-.~-.~-.~-.~-.~-.~-.     Addr: {addr}
+   ;     {{_.~-.~-.~-.~-.~-.~-.~         PID: {pid}
+  ;:  .-~`    ~-.~-.~-.~-.~-.
+ ;.: :'    ._   ~-.~-.~-.~-.~-             https://github.com/miaxos/roster/
+  ;::`-.    '-._  ~-.~-.~-.~-
+   ;::. `-.    '-,~-.~-.~-.
+    ';::::.`''-.-'
+      ';::;;:,:'
+         '||"
+         / |
+       ~` ~"'
+        "###,
+        version = "local",
+        mode = "standalone",
+        port = "12345",
+        addr = "local",
+        pid = "no"
+    );
+
     server.join();
 
     Ok(())
