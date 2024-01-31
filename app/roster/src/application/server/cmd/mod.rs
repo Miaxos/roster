@@ -14,6 +14,7 @@ mod parse;
 mod acl;
 mod client;
 mod get;
+mod hello;
 mod ping;
 mod set;
 mod unknown;
