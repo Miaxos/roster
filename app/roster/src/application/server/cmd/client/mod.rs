@@ -7,6 +7,7 @@ use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
 
 mod id;
+mod info;
 mod list;
 mod set_info;
 mod set_name;
@@ -18,6 +19,7 @@ pub enum Client {
     SetName(set_name::ClientSetName),
     List(list::ClientList),
     Id(id::ClientID),
+    Info(info::ClientInfo),
 }
 
 // TODO(@miaxos): This is a simple implementation of the HELP to have the
@@ -26,6 +28,8 @@ pub enum Client {
 const HELP_TEXT: &str = r#"CLIENT <subcommand> [<arg> [value] [opt] ...]. subcommands are:
 ID
     Return the ID of the current connection.
+INFO
+    Return information about the current client connection.
 LIST [options ...]
     Return information about client connections. Options:
     * TYPE (NORMAL|MASTER|REPLICA|PUBSUB)
@@ -64,6 +68,9 @@ impl SubcommandRegistry for Client {
             "id" => Command::Client(Client::Id(id::ClientID::parse_frames(
                 &mut parse,
             )?)),
+            "info" => Command::Client(Client::Info(
+                info::ClientInfo::parse_frames(&mut parse)?,
+            )),
             "list" => Command::Client(Client::List(
                 list::ClientList::parse_frames(&mut parse)?,
             )),
@@ -114,6 +121,7 @@ impl CommandExecution for Client {
             Client::SetInfo(cmd) => cmd.apply(dst, ctx).await,
             Client::SetName(cmd) => cmd.apply(dst, ctx).await,
             Client::Id(cmd) => cmd.apply(dst, ctx).await,
+            Client::Info(cmd) => cmd.apply(dst, ctx).await,
             Client::List(cmd) => cmd.apply(dst, ctx).await,
         }
     }

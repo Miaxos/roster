@@ -1,5 +1,4 @@
 use anyhow::bail;
-use bytestring::ByteString;
 
 use super::super::parse::Parse;
 use crate::application::server::cmd::parse::ParseError;
@@ -107,14 +106,7 @@ impl ClientList {
         // TODO(@miaxos): lot of things missing here
         let mut conn_frames = Vec::with_capacity(connections.len());
         for conn in connections {
-            conn_frames.push(Frame::Simple(ByteString::from(format!(
-                "id={id} addr={addr} laddr={laddr} fd={fd} name={name}",
-                id = &conn.id,
-                addr = &conn.addr,
-                laddr = &conn.laddr,
-                fd = &conn.fd,
-                name = &conn.name().await.unwrap_or(ByteString::new()),
-            ))));
+            conn_frames.push(Frame::Simple(conn.format_conn().await));
         }
 
         let response = Frame::Array(conn_frames);

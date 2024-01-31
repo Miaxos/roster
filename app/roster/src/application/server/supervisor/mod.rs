@@ -124,6 +124,17 @@ impl MetadataConnection {
     pub async fn name(&self) -> Option<ByteString> {
         self.name.read().await.clone()
     }
+
+    pub async fn format_conn(&self) -> ByteString {
+        ByteString::from(format!(
+            "id={id} addr={addr} laddr={laddr} fd={fd} name={name}",
+            id = &self.id,
+            addr = &self.addr,
+            laddr = &self.laddr,
+            fd = &self.fd,
+            name = &self.name().await.unwrap_or(ByteString::new()),
+        ))
+    }
 }
 
 impl MetadataConnection {

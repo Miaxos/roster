@@ -33,6 +33,8 @@ pub async fn test_simple_client_help() {
     CLIENT <subcommand> [<arg> [value] [opt] ...]. subcommands are:
     ID
         Return the ID of the current connection.
+    INFO
+        Return information about the current client connection.
     LIST [options ...]
         Return information about client connections. Options:
         * TYPE (NORMAL|MASTER|REPLICA|PUBSUB)
