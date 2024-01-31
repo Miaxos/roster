@@ -321,4 +321,16 @@ mod tests {
             assert!(Frame::check(&mut cur).is_ok());
         }
     }
+
+    #[test]
+    fn test_map_frame() {
+        let test_case: Vec<&[u8]> =
+            vec![b"%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n"];
+
+        for t in test_case {
+            let b = BytesMut::from(t);
+            let mut cur = Cursor::new(&b);
+            assert!(Frame::check(&mut cur).is_ok());
+        }
+    }
 }
