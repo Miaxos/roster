@@ -43,7 +43,7 @@ the command or open an issue.
 - [ ] CLIENT GETREDIR
 - [x] CLIENT HELP
 - [x] CLIENT ID
-- [ ] CLIENT INFO
+- [x] CLIENT INFO
 - [ ] CLIENT KILL
 - [ ] CLIENT LIST
   A lot is missing right now but it's partially working, not every arguments are
