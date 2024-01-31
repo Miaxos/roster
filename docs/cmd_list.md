@@ -45,7 +45,7 @@ the command or open an issue.
 - [x] CLIENT ID
 - [x] CLIENT INFO
 - [ ] CLIENT KILL
-- [ ] CLIENT LIST
+- [x] CLIENT LIST
   A lot is missing right now but it's partially working, not every arguments are
   supported yet.
 - [ ] CLIENT NO EVICT
