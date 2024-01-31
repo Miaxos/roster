@@ -1,5 +1,4 @@
 use anyhow::bail;
-use bytestring::ByteString;
 
 use super::super::parse::Parse;
 use crate::application::server::cmd::parse::ParseError;
