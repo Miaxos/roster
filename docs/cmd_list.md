@@ -39,7 +39,7 @@ the command or open an issue.
 - [ ] BZPOPMAX
 - [ ] BZPOPMIN
 - [ ] CLIENT CACHING
-- [ ] CLIENT GETNAME
+- [x] CLIENT GETNAME
 - [ ] CLIENT GETREDIR
 - [x] CLIENT HELP
 - [x] CLIENT ID

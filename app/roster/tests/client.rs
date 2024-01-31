@@ -31,6 +31,8 @@ pub async fn test_simple_client_help() {
 
     insta::assert_display_snapshot!(joined, @r###"
     CLIENT <subcommand> [<arg> [value] [opt] ...]. subcommands are:
+    GETNAME
+        Return the name of the current connection.
     ID
         Return the ID of the current connection.
     INFO
