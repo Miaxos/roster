@@ -204,6 +204,7 @@ impl WriteConnection {
     }
 
     /// Write a frame literal to the stream
+    #[async_recursion::async_recursion(?Send)]
     async fn write_value(&mut self, frame: &Frame) -> io::Result<()> {
         match frame {
             Frame::Simple(val) => {
@@ -229,6 +230,17 @@ impl WriteConnection {
                 self.stream_w.write([b'$'].as_slice()).await.0?;
                 self.write_decimal(len as u64).await?;
                 self.stream_w.write(val.slice(..)).await.0?;
+                self.stream_w.write(&[b'\r', b'\n']).await.0?;
+            }
+            Frame::HashMap(val) => {
+                let len = val.len();
+
+                self.stream_w.write([b'%'].as_slice()).await.0?;
+                self.write_decimal(len as u64).await?;
+                for (key, value) in val {
+                    self.write_value(key).await?;
+                    self.write_value(value).await?;
+                }
                 self.stream_w.write(&[b'\r', b'\n']).await.0?;
             }
             // Encoding an `Array` from within a value cannot be done using a

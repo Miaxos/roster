@@ -1,6 +1,7 @@
 //! Provides a type representing a Redis protocol frame as well as utilities for
 //! parsing frames from a byte array.
 
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::Cursor;
 use std::num::TryFromIntError;
@@ -10,7 +11,7 @@ use bytes::{Buf, Bytes, BytesMut};
 use bytestring::ByteString;
 
 /// A frame in the Redis protocol.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Frame {
     Simple(ByteString),
     Error(ByteString),
@@ -18,6 +19,36 @@ pub enum Frame {
     Bulk(Bytes),
     Null,
     Array(Vec<Frame>),
+    HashMap(HashMap<Frame, Frame>),
+}
+
+// TODO(@miaxos): hacky hash derivation for now, to test a little.
+impl core::hash::Hash for Frame {
+    fn hash<H: core::hash::Hasher>(&self, ra_expand_state: &mut H) {
+        core::mem::discriminant(self).hash(ra_expand_state);
+        match self {
+            Frame::Simple(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Error(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Integer(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Bulk(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Null => {}
+            Frame::Array(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::HashMap(_) => {
+                // TODO: Should test the behavior of redis in this case.
+                unimplemented!("")
+            }
+        }
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -63,6 +94,16 @@ impl Frame {
                 let len = get_decimal_mut(src)?;
 
                 for _ in 0..len {
+                    Frame::check(src)?;
+                }
+
+                Ok(())
+            }
+            b'%' => {
+                let len = get_decimal_mut(src)?;
+
+                // Key and value frames
+                for _ in 0..(len * 2) {
                     Frame::check(src)?;
                 }
 
@@ -136,6 +177,18 @@ impl Frame {
                 }
 
                 Ok(Frame::Array(out))
+            }
+            b'%' => {
+                let len = get_decimal(src)?.try_into()?;
+                let mut out = HashMap::with_capacity(len);
+
+                for _ in (0..(len * 2)).step_by(2) {
+                    let key = Frame::parse(src)?;
+                    let value = Frame::parse(src)?;
+                    out.insert(key, value);
+                }
+
+                Ok(Frame::HashMap(out))
             }
             _ => unimplemented!(),
         }

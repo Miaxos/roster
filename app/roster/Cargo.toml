@@ -23,6 +23,7 @@ default = []
 
 [dependencies]
 anyhow.workspace = true
+async-recursion = "1"
 atoi_simd = "0.15"
 coarsetime = "0.1"
 crc = "3"
