@@ -5,3 +5,41 @@ bind_addr = "0.0.0.0:3456"
 # When this limit is reached, the server will stop accepting connections until
 # an active connection terminates.
 max_connection = 200
+
+# ------------------------------------------------------------------------------
+
+# The lan cluster describe a cluster which should only be available "locally"
+# with a quite fast path between each members
+[lan_cluster]
+# The bind address we are going to listen to for the LAN cluster communication.
+bind_addr = "127.0.0.1:20456"
+# To identify the actual node in the tracing
+node_id = "11111111-1111-1111-1111-111111111111"
+
+# The autopilot allow for automatic management of roster servers.
+# It can
+#   - Clean up old servers
+#
+# We follow the settings from `consul`.
+#
+# The configuration entered here is only available at the cluster creation. Once
+# the cluster is created, you won't be able to update it (unless it's something
+# that you need and you create an issue in the repository).
+[lan_cluster.autopilot]
+# To remove dead servers everytime a new node is added to the cluster or
+# periodically.
+clean_up_dead_servers = true
+# The maximum amount of time a server can go without contact from leader before
+# being considered unhealthy and removed when the cleanup process kick in.
+last_contact_threshold = "5s"
+# The minimal number of server needed to establish a quorum.
+min_quorum = 0
+
+# Retry join describe the address needed to be able to connect to the server
+# Right now there are no authorization and encryption, but later we should use
+# mTLS to secure connection between members.
+[[lan_cluster.retry_join]]
+api_addr = "127.0.0.1:27001"
+# ca_cert_file = "/path/to/ca1"
+# client_cert_file = "/path/to/client/cert1"
+# client_key_file = "/path/to/client/key1"

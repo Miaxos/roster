@@ -27,7 +27,7 @@ fn main() -> anyhow::Result<()> {
 
     // Initialize memory storage
 
-    // Initialize Roster WAN clusturing
+    // Initialize Roster WAN clusturing (federation)
 
     // Initialize Roster LAN clusturing
     //
