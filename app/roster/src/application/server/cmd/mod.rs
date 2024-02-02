@@ -1,6 +1,7 @@
 use self::acl::Acl;
 use self::client::Client;
 use self::get::Get;
+use self::hello::Hello;
 use self::parse::Parse;
 use self::ping::Ping;
 use self::set::Set;
@@ -14,6 +15,7 @@ mod parse;
 mod acl;
 mod client;
 mod get;
+mod hello;
 mod ping;
 mod set;
 mod unknown;
@@ -25,6 +27,7 @@ mod unknown;
 pub enum Command {
     Acl(Acl),
     Client(Client),
+    Hello(Hello),
     Ping(Ping),
     Set(Set),
     Get(Get),
@@ -100,6 +103,7 @@ impl Command {
                 return Client::from_parse(parse);
             }
             "ping" => Command::Ping(Ping::parse_frames(&mut parse)?),
+            "hello" => Command::Hello(Hello::parse_frames(&mut parse)?),
             "set" => Command::Set(Set::parse_frames(&mut parse)?),
             "get" => Command::Get(Get::parse_frames(&mut parse)?),
             _ => {
@@ -136,6 +140,7 @@ impl CommandExecution for Command {
             Ping(cmd) => cmd.apply(dst, ctx).await,
             Unknown(cmd) => cmd.apply(dst, ctx).await,
             Client(cmd) => cmd.apply(dst, ctx).await,
+            Hello(cmd) => cmd.apply(dst, ctx).await,
             Set(cmd) => cmd.apply(dst, ctx).await,
             Get(cmd) => cmd.apply(dst, ctx).await,
         }
@@ -149,6 +154,7 @@ impl CommandExecution for Command {
             Ping(cmd) => cmd.hash_key(),
             Unknown(cmd) => cmd.hash_key(),
             Client(cmd) => cmd.hash_key(),
+            Hello(cmd) => cmd.hash_key(),
             Set(cmd) => cmd.hash_key(),
             Get(cmd) => cmd.hash_key(),
         }

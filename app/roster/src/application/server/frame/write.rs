@@ -189,4 +189,21 @@ mod tests {
         write_frame(&mut v, &frame).await.unwrap();
         insta::assert_debug_snapshot!(String::from_utf8(v.0).unwrap(), @r###""%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n""###);
     }
+
+    #[monoio::test]
+    async fn simple_decimal_write_value_hashmap_string() {
+        let mut v = TestUtilVec(Vec::new());
+        let frame = Frame::Map(IndexMap::from_iter([
+            (
+                Frame::Simple(ByteString::from_static("first")),
+                Frame::Simple(ByteString::from_static("one")),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("second")),
+                Frame::Integer(2),
+            ),
+        ]));
+        write_frame(&mut v, &frame).await.unwrap();
+        insta::assert_debug_snapshot!(String::from_utf8(v.0).unwrap(), @r###""%2\r\n+first\r\n+one\r\n+second\r\n:2\r\n""###);
+    }
 }

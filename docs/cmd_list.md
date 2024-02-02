@@ -1,7 +1,7 @@
 # Redis Compatibility Commands list
 
 It only shows which commands are present in the code, not if the command is
-properly working yet.
+properly working yet. Let's say minimal features are available.
 
 If a command is not properly working, feel free to check the associated issue of
 the command or open an issue.
@@ -152,7 +152,7 @@ the command or open an issue.
 - [ ] GETRANGE
 - [ ] GETSET
 - [ ] HDEL
-- [ ] HELLO
+- [x] HELLO
 - [ ] HEXISTS
 - [ ] HGET
 - [ ] HGETALL
