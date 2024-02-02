@@ -8,9 +8,12 @@ use std::string::FromUtf8Error;
 
 use bytes::{Buf, Bytes, BytesMut};
 use bytestring::ByteString;
+use indexmap::IndexMap;
+
+pub(crate) mod write;
 
 /// A frame in the Redis protocol.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Frame {
     Simple(ByteString),
     Error(ByteString),
@@ -18,6 +21,36 @@ pub enum Frame {
     Bulk(Bytes),
     Null,
     Array(Vec<Frame>),
+    Map(IndexMap<Frame, Frame>),
+}
+
+// TODO(@miaxos): hacky hash derivation for now, to test a little.
+impl core::hash::Hash for Frame {
+    fn hash<H: core::hash::Hasher>(&self, ra_expand_state: &mut H) {
+        core::mem::discriminant(self).hash(ra_expand_state);
+        match self {
+            Frame::Simple(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Error(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Integer(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Bulk(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Null => {}
+            Frame::Array(f0) => {
+                f0.hash(ra_expand_state);
+            }
+            Frame::Map(_) => {
+                // TODO: Should test the behavior of redis in this case.
+                unimplemented!("")
+            }
+        }
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -63,6 +96,16 @@ impl Frame {
                 let len = get_decimal_mut(src)?;
 
                 for _ in 0..len {
+                    Frame::check(src)?;
+                }
+
+                Ok(())
+            }
+            b'%' => {
+                let len = get_decimal_mut(src)?;
+
+                // Key and value frames
+                for _ in 0..(len * 2) {
                     Frame::check(src)?;
                 }
 
@@ -136,6 +179,18 @@ impl Frame {
                 }
 
                 Ok(Frame::Array(out))
+            }
+            b'%' => {
+                let len = get_decimal(src)?.try_into()?;
+                let mut out = IndexMap::with_capacity(len);
+
+                for _ in (0..(len * 2)).step_by(2) {
+                    let key = Frame::parse(src)?;
+                    let value = Frame::parse(src)?;
+                    out.insert(key, value);
+                }
+
+                Ok(Frame::Map(out))
             }
             _ => unimplemented!(),
         }
@@ -314,6 +369,18 @@ mod tests {
             b"*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n",
             b"*2\r\n$4\r\nPING\r\n$5\r\nhello\r\n",
         ];
+
+        for t in test_case {
+            let b = BytesMut::from(t);
+            let mut cur = Cursor::new(&b);
+            assert!(Frame::check(&mut cur).is_ok());
+        }
+    }
+
+    #[test]
+    fn test_map_frame() {
+        let test_case: Vec<&[u8]> =
+            vec![b"%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n"];
 
         for t in test_case {
             let b = BytesMut::from(t);
