@@ -1,14 +1,13 @@
 use std::io;
 use std::io::Cursor;
 
-use monoio::buf::{IoBuf, IoVecBuf};
+use monoio::buf::IoBuf;
 use monoio::io::AsyncWriteRent;
-use monoio::BufResult;
 
 use crate::application::server::frame::Frame;
 
 /// Write a decimal value
-pub async fn write_decimal(
+async fn write_decimal(
     buf_w: &mut impl AsyncWriteRent,
     val: u64,
 ) -> io::Result<()> {
@@ -29,7 +28,7 @@ pub async fn write_decimal(
 
 /// Write a value
 #[async_recursion::async_recursion(?Send)]
-pub async fn write_value(
+async fn write_value(
     buf_w: &mut impl AsyncWriteRent,
     frame: &Frame,
 ) -> io::Result<()> {

@@ -8,7 +8,7 @@ use monoio::io::{
 };
 use monoio::net::TcpStream;
 
-use super::frame::write::{write_decimal, write_frame, write_value};
+use super::frame::write::write_frame;
 use super::frame::Frame;
 
 /// Send and receive `Frame` values from a remote peer.
@@ -180,16 +180,6 @@ impl WriteConnection {
     /// Once the buffer is full, it is flushed to the underlying socket.
     pub async fn write_frame(&mut self, frame: &Frame) -> io::Result<()> {
         write_frame(&mut self.stream_w, frame).await
-    }
-
-    /// Write a frame literal to the stream
-    async fn write_value(&mut self, frame: &Frame) -> io::Result<()> {
-        write_value(&mut self.stream_w, frame).await
-    }
-
-    /// Write a decimal frame to the stream_w
-    async fn write_decimal(&mut self, val: u64) -> io::Result<()> {
-        write_decimal(&mut self.stream_w, val).await
     }
 
     pub fn into_inner(self) -> OwnedWriteHalf<TcpStream> {
