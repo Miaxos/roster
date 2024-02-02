@@ -97,10 +97,10 @@ pub async fn write_frame(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use std::io::Write;
 
     use bytestring::ByteString;
+    use indexmap::IndexMap;
     use monoio::buf::{IoBuf, IoVecBuf};
     use monoio::io::AsyncWriteRent;
     use monoio::BufResult;
@@ -176,9 +176,7 @@ mod tests {
     #[monoio::test]
     async fn simple_decimal_write_value_hashmap() {
         let mut v = TestUtilVec(Vec::new());
-        // HashMap are unordered when accessing them, so it could be first first
-        // or first in second.
-        let frame = Frame::Map(HashMap::from_iter([
+        let frame = Frame::Map(IndexMap::from_iter([
             (
                 Frame::Simple(ByteString::from_static("first")),
                 Frame::Integer(1),
@@ -189,11 +187,6 @@ mod tests {
             ),
         ]));
         write_frame(&mut v, &frame).await.unwrap();
-        let possible_1 =
-            String::from_utf8_lossy(b"%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n");
-        let possible_2 =
-            String::from_utf8_lossy(b"%2\r\n+second\r\n:2\r\n+first\r\n:1\r\n");
-        let result = String::from_utf8(v.0).unwrap();
-        assert!(result == possible_1 || result == possible_2);
+        insta::assert_debug_snapshot!(String::from_utf8(v.0).unwrap(), @r###""%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n""###);
     }
 }

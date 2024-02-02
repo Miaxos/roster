@@ -1,7 +1,6 @@
 //! Provides a type representing a Redis protocol frame as well as utilities for
 //! parsing frames from a byte array.
 
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::Cursor;
 use std::num::TryFromIntError;
@@ -9,6 +8,7 @@ use std::string::FromUtf8Error;
 
 use bytes::{Buf, Bytes, BytesMut};
 use bytestring::ByteString;
+use indexmap::IndexMap;
 
 pub(crate) mod write;
 
@@ -21,7 +21,7 @@ pub enum Frame {
     Bulk(Bytes),
     Null,
     Array(Vec<Frame>),
-    Map(HashMap<Frame, Frame>),
+    Map(IndexMap<Frame, Frame>),
 }
 
 // TODO(@miaxos): hacky hash derivation for now, to test a little.
@@ -182,7 +182,7 @@ impl Frame {
             }
             b'%' => {
                 let len = get_decimal(src)?.try_into()?;
-                let mut out = HashMap::with_capacity(len);
+                let mut out = IndexMap::with_capacity(len);
 
                 for _ in (0..(len * 2)).step_by(2) {
                     let key = Frame::parse(src)?;
