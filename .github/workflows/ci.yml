@@ -76,6 +76,11 @@ jobs:
         - build: macos
           os: macos-latest
           rust: nightly
+          target: x86_64-apple-darwin
+        - build: macos
+          os: macos-latest
+          rust: nightly
+          target: aarch64-apple-darwin
 #       - build: win-msvc
 #         os: windows-2022
 #         rust: nightly
