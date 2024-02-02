@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 use bytes::Bytes;
-use bytestring::ByteString;
 use indexmap::IndexMap;
 
 use super::CommandExecution;
