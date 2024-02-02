@@ -59,7 +59,7 @@ pub async fn write_value(
             buf_w.write(val.slice(..)).await.0?;
             buf_w.write(&[b'\r', b'\n']).await.0?;
         }
-        Frame::HashMap(val) => {
+        Frame::Map(val) => {
             let len = val.len();
 
             buf_w.write([b'%'].as_slice()).await.0?;
@@ -68,7 +68,7 @@ pub async fn write_value(
                 write_value(buf_w, key).await?;
                 write_value(buf_w, value).await?;
             }
-            buf_w.write(&[b'\r', b'\n']).await.0?;
+            // buf_w.write(&[b'\r', b'\n']).await.0?;
         }
         // Encoding an `Array` from within a value cannot be done using a
         // recursive strategy. In general, async fns do not support
@@ -110,13 +110,16 @@ pub async fn write_frame(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use std::io::Write;
 
+    use bytestring::ByteString;
     use monoio::buf::{IoBuf, IoVecBuf};
     use monoio::io::AsyncWriteRent;
     use monoio::BufResult;
 
-    use super::write_decimal;
+    use super::{write_decimal, write_frame, write_value};
+    use crate::application::server::frame::Frame;
 
     struct TestUtilVec<W>(pub Vec<W>);
 
@@ -130,7 +133,7 @@ mod tests {
         }
 
         async fn flush(&mut self) -> std::io::Result<()> {
-            todo!();
+            Ok(())
         }
 
         async fn writev<T: IoVecBuf>(
@@ -150,5 +153,60 @@ mod tests {
         let mut v = TestUtilVec(Vec::new());
         write_decimal(&mut v, 12).await.unwrap();
         assert_eq!(v.0, b"12\r\n");
+    }
+
+    #[monoio::test]
+    async fn simple_decimal_write_value_null() {
+        let mut v = TestUtilVec(Vec::new());
+        write_value(&mut v, &Frame::Null).await.unwrap();
+        insta::assert_debug_snapshot!(String::from_utf8(v.0).unwrap(), @r###""$-1\r\n""###);
+    }
+
+    #[monoio::test]
+    async fn simple_decimal_write_value_string() {
+        let mut v = TestUtilVec(Vec::new());
+        let frame = Frame::Simple(ByteString::from_static("blblblbl"));
+        write_value(&mut v, &frame).await.unwrap();
+        insta::assert_debug_snapshot!(String::from_utf8(v.0).unwrap(), @r###""+blblblbl\r\n""###);
+    }
+
+    #[monoio::test]
+    async fn simple_decimal_write_value_int() {
+        let mut v = TestUtilVec(Vec::new());
+        let frame = Frame::Integer(123456);
+        write_value(&mut v, &frame).await.unwrap();
+        insta::assert_debug_snapshot!(String::from_utf8(v.0).unwrap(), @r###"":123456\r\n""###);
+    }
+
+    #[monoio::test]
+    async fn simple_decimal_write_value_err() {
+        let mut v = TestUtilVec(Vec::new());
+        let frame = Frame::Error(ByteString::from_static("blblblbl"));
+        write_value(&mut v, &frame).await.unwrap();
+        insta::assert_debug_snapshot!(String::from_utf8(v.0).unwrap(), @r###""-blblblbl\r\n""###);
+    }
+
+    #[monoio::test]
+    async fn simple_decimal_write_value_hashmap() {
+        let mut v = TestUtilVec(Vec::new());
+        // HashMap are unordered when accessing them, so it could be first first
+        // or first in second.
+        let frame = Frame::Map(HashMap::from_iter([
+            (
+                Frame::Simple(ByteString::from_static("first")),
+                Frame::Integer(1),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("second")),
+                Frame::Integer(2),
+            ),
+        ]));
+        write_frame(&mut v, &frame).await.unwrap();
+        let possible_1 =
+            String::from_utf8_lossy(b"%2\r\n+first\r\n:1\r\n+second\r\n:2\r\n");
+        let possible_2 =
+            String::from_utf8_lossy(b"%2\r\n+second\r\n:2\r\n+first\r\n:1\r\n");
+        let result = String::from_utf8(v.0).unwrap();
+        assert!(result == possible_1 || result == possible_2);
     }
 }
