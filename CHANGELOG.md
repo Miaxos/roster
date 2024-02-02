@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/Miaxos/roster/compare/v0.1.2...v0.1.3) - 2024-02-02
+
+### Other
+- add a way to publish releases
+
 ## [0.1.2](https://github.com/Miaxos/roster/compare/v0.1.1...v0.1.2) - 2024-02-02
 
 ### Added
