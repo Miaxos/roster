@@ -69,24 +69,6 @@ async fn write_value(
             }
             // buf_w.write(&[b'\r', b'\n']).await.0?;
         }
-        // Encoding an `Array` from within a value cannot be done using a
-        // recursive strategy. In general, async fns do not support
-        // recursion. Mini-redis has not needed to encode nested arrays yet,
-        // so for now it is skipped.
-        Frame::Array(_val) => unreachable!(),
-    }
-
-    Ok(())
-}
-
-pub async fn write_frame(
-    buf_w: &mut impl AsyncWriteRent,
-    frame: &Frame,
-) -> io::Result<()> {
-    // Arrays are encoded by encoding each entry. All other frame types are
-    // considered literals. For now, mini-redis is not able to encode
-    // recursive frame structures. See below for more details.
-    match frame {
         Frame::Array(val) => {
             // Encode the length of the array.
             buf_w.write(&[b'*']).await.0?;
@@ -97,10 +79,16 @@ pub async fn write_frame(
                 write_value(buf_w, entry).await?;
             }
         }
-        // The frame type is a literal. Encode the value directly.
-        _ => write_value(buf_w, frame).await?,
     }
 
+    Ok(())
+}
+
+pub async fn write_frame(
+    buf_w: &mut impl AsyncWriteRent,
+    frame: &Frame,
+) -> io::Result<()> {
+    write_value(buf_w, frame).await?;
     // Ensure the encoded frame is written to the socket. The calls above
     // are to the buffered stream and writes. Calling `flush` writes the
     // remaining contents of the buffer to the socket.
