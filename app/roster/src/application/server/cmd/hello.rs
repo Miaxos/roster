@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
+use bytes::Bytes;
 use bytestring::ByteString;
+use indexmap::IndexMap;
 
 use super::CommandExecution;
 use crate::application::server::cmd::Parse;
@@ -38,33 +40,27 @@ impl CommandExecution for Hello {
     ) -> anyhow::Result<()> {
         let id = ctx.connection.id();
 
-        let map = HashMap::from_iter([
+        let map = IndexMap::from_iter([
             (
-                Frame::Simple(ByteString::from_static("server")),
-                Frame::Simple(ByteString::from_static("roster")),
+                Frame::Bulk(Bytes::from_static(b"server")),
+                Frame::Bulk(Bytes::from_static(b"roster")),
             ),
             (
-                Frame::Simple(ByteString::from_static("version")),
-                Frame::Simple(ByteString::from_static(crate::VERSION)),
+                Frame::Bulk(Bytes::from_static(b"version")),
+                Frame::Bulk(Bytes::from_static(crate::VERSION.as_bytes())),
+            ),
+            (Frame::Bulk(Bytes::from_static(b"proto")), Frame::Integer(3)),
+            (Frame::Bulk(Bytes::from_static(b"id")), Frame::Integer(id)),
+            (
+                Frame::Bulk(Bytes::from_static(b"mode")),
+                Frame::Bulk(Bytes::from_static(b"standalone")),
             ),
             (
-                Frame::Simple(ByteString::from_static("proto")),
-                Frame::Integer(3),
+                Frame::Bulk(Bytes::from_static(b"role")),
+                Frame::Bulk(Bytes::from_static(b"undefined")),
             ),
             (
-                Frame::Simple(ByteString::from_static("id")),
-                Frame::Integer(id),
-            ),
-            (
-                Frame::Simple(ByteString::from_static("mode")),
-                Frame::Simple(ByteString::from_static("standalone")),
-            ),
-            (
-                Frame::Simple(ByteString::from_static("role")),
-                Frame::Simple(ByteString::from_static("undefined")),
-            ),
-            (
-                Frame::Simple(ByteString::from_static("modules")),
+                Frame::Bulk(Bytes::from_static(b"modules")),
                 Frame::Array(Vec::new()),
             ),
         ]);
