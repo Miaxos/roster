@@ -1,4 +1,4 @@
-use super::super::parse::Parse;
+use crate::application::server::cmd::Parse;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
 use crate::application::server::frame::Frame;
@@ -71,7 +71,7 @@ mod tests {
         insta::assert_debug_snapshot!(client_cmd, @r###"
         Client(
             GetName(
-                Hello,
+                ClientGetName,
             ),
         )
         "###);
