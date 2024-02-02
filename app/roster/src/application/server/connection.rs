@@ -2,13 +2,13 @@ use std::fmt::Debug;
 use std::io::{self, Cursor};
 
 use bytes::BytesMut;
-use monoio::buf::IoBuf;
 use monoio::io::{
-    AsyncReadRent, AsyncWriteRent, BufReader, BufWriter, OwnedReadHalf,
-    OwnedWriteHalf, Splitable,
+    AsyncReadRent, BufReader, BufWriter, OwnedReadHalf, OwnedWriteHalf,
+    Splitable,
 };
 use monoio::net::TcpStream;
 
+use super::frame::write::{write_decimal, write_frame, write_value};
 use super::frame::Frame;
 
 /// Send and receive `Frame` values from a remote peer.
@@ -179,95 +179,17 @@ impl WriteConnection {
     /// *buffered* write stream. The data will be written to the buffer.
     /// Once the buffer is full, it is flushed to the underlying socket.
     pub async fn write_frame(&mut self, frame: &Frame) -> io::Result<()> {
-        // Arrays are encoded by encoding each entry. All other frame types are
-        // considered literals. For now, mini-redis is not able to encode
-        // recursive frame structures. See below for more details.
-        match frame {
-            Frame::Array(val) => {
-                // Encode the length of the array.
-                self.stream_w.write(&[b'*']).await.0?;
-                self.write_decimal(val.len() as u64).await?;
-
-                // Iterate and encode each entry in the array.
-                for entry in &**val {
-                    self.write_value(entry).await?;
-                }
-            }
-            // The frame type is a literal. Encode the value directly.
-            _ => self.write_value(frame).await?,
-        }
-
-        // Ensure the encoded frame is written to the socket. The calls above
-        // are to the buffered stream and writes. Calling `flush` writes the
-        // remaining contents of the buffer to the socket.
-        self.stream_w.flush().await
+        write_frame(&mut self.stream_w, frame).await
     }
 
     /// Write a frame literal to the stream
-    #[async_recursion::async_recursion(?Send)]
     async fn write_value(&mut self, frame: &Frame) -> io::Result<()> {
-        match frame {
-            Frame::Simple(val) => {
-                self.stream_w.write(&[b'+']).await.0?;
-                self.stream_w.write(val.as_bytes().slice(..)).await.0?;
-                self.stream_w.write(&[b'\r', b'\n']).await.0?;
-            }
-            Frame::Error(val) => {
-                self.stream_w.write(&[b'-']).await.0?;
-                self.stream_w.write(val.as_bytes().slice(..)).await.0?;
-                self.stream_w.write(&[b'\r', b'\n']).await.0?;
-            }
-            Frame::Integer(val) => {
-                self.stream_w.write(&[b':']).await.0?;
-                self.write_decimal(*val).await?;
-            }
-            Frame::Null => {
-                self.stream_w.write(b"$-1\r\n").await.0?;
-            }
-            Frame::Bulk(val) => {
-                let len = val.len();
-
-                self.stream_w.write([b'$'].as_slice()).await.0?;
-                self.write_decimal(len as u64).await?;
-                self.stream_w.write(val.slice(..)).await.0?;
-                self.stream_w.write(&[b'\r', b'\n']).await.0?;
-            }
-            Frame::HashMap(val) => {
-                let len = val.len();
-
-                self.stream_w.write([b'%'].as_slice()).await.0?;
-                self.write_decimal(len as u64).await?;
-                for (key, value) in val {
-                    self.write_value(key).await?;
-                    self.write_value(value).await?;
-                }
-                self.stream_w.write(&[b'\r', b'\n']).await.0?;
-            }
-            // Encoding an `Array` from within a value cannot be done using a
-            // recursive strategy. In general, async fns do not support
-            // recursion. Mini-redis has not needed to encode nested arrays yet,
-            // so for now it is skipped.
-            Frame::Array(_val) => unreachable!(),
-        }
-
-        Ok(())
+        write_value(&mut self.stream_w, frame).await
     }
 
     /// Write a decimal frame to the stream_w
     async fn write_decimal(&mut self, val: u64) -> io::Result<()> {
-        use std::io::Write;
-
-        // Convert the value to a string
-        let buf = vec![0u8; 20];
-        let mut buf = Cursor::new(buf);
-        write!(&mut buf, "{}", val)?;
-
-        let pos = buf.position() as usize;
-
-        self.stream_w.write(buf.into_inner().slice(..pos)).await.0?;
-        self.stream_w.write(b"\r\n").await.0?;
-
-        Ok(())
+        write_decimal(&mut self.stream_w, val).await
     }
 
     pub fn into_inner(self) -> OwnedWriteHalf<TcpStream> {

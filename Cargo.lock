@@ -1538,6 +1538,7 @@ dependencies = [
  "scc",
  "serde",
  "sharded-thread",
+ "tempfile",
  "thiserror",
  "tokio",
  "tokio-util",

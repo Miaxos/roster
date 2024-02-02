@@ -10,6 +10,8 @@ use std::string::FromUtf8Error;
 use bytes::{Buf, Bytes, BytesMut};
 use bytestring::ByteString;
 
+pub(crate) mod write;
+
 /// A frame in the Redis protocol.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Frame {
