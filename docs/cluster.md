@@ -24,3 +24,7 @@ AZ[^1] or even in the same datacenter. Later we could even add some rack
 awarness if needed.
 
 [^1]: Availability Zone.
+
+### Autopilot
+
+TODO
