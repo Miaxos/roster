@@ -1,3 +1,8 @@
+use std::collections::HashMap;
+
+use bytestring::ByteString;
+
+use super::CommandExecution;
 use crate::application::server::cmd::Parse;
 use crate::application::server::connection::WriteConnection;
 use crate::application::server::context::Context;
@@ -23,18 +28,48 @@ impl Hello {
         parse.finish()?;
         Ok(Hello::new())
     }
+}
 
-    pub(crate) async fn apply(
+impl CommandExecution for Hello {
+    async fn apply(
         self,
         dst: &mut WriteConnection,
         ctx: Context,
     ) -> anyhow::Result<()> {
-        let name = ctx.connection.name().await;
+        let id = ctx.connection.id();
 
-        let response = match name {
-            Some(name) => Frame::Bulk(name.into_bytes()),
-            None => Frame::Null,
-        };
+        let map = HashMap::from_iter([
+            (
+                Frame::Simple(ByteString::from_static("server")),
+                Frame::Simple(ByteString::from_static("roster")),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("version")),
+                Frame::Simple(ByteString::from_static(crate::VERSION)),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("proto")),
+                Frame::Integer(3),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("id")),
+                Frame::Integer(id),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("mode")),
+                Frame::Simple(ByteString::from_static("standalone")),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("role")),
+                Frame::Simple(ByteString::from_static("undefined")),
+            ),
+            (
+                Frame::Simple(ByteString::from_static("modules")),
+                Frame::Array(Vec::new()),
+            ),
+        ]);
+
+        let response = Frame::Map(map);
         dst.write_frame(&response).await?;
 
         Ok(())
@@ -66,20 +101,18 @@ mod tests {
 
     #[test]
     fn ensure_parsing() {
-        let entry: RespValue = resp_array!["CLIENT", "GETNAME"];
+        let entry: RespValue = resp_array!["HELLO"];
         let client_cmd = parse_cmd(entry).unwrap();
         insta::assert_debug_snapshot!(client_cmd, @r###"
-        Client(
-            GetName(
-                ClientGetName,
-            ),
+        Hello(
+            Hello,
         )
         "###);
     }
 
     #[test]
     fn ensure_parsing_too_much() {
-        let entry: RespValue = resp_array!["CLIENT", "GETNAME", "BLBL"];
+        let entry: RespValue = resp_array!["HELLO", "BLBL"];
         let client_cmd = parse_cmd(entry);
         assert!(client_cmd.is_err());
         let client_cmd = client_cmd.unwrap_err();
