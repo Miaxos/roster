@@ -2,7 +2,6 @@
 #
 name: release
 
-# Only do the release on roster-vx.y.z tags.
 on:
   push:
     tags:
