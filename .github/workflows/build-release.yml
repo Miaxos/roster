@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Get the release version from the tag
         if: env.VERSION == ''
-        run: echo "${{ github.ref_name }}" | sed -En 's/^roster-v(.*)$/VERSION=\1/p' >> $GITHUB_ENV
+        run: echo "${{ github.ref_name }}" | sed -En 's/^v(.*)$/VERSION=\1/p' >> $GITHUB_ENV
       - name: Get the roster release version from the tag
         if: env.RELEASE_NAME == ''
         run: echo "RELEASE_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
@@ -30,7 +30,7 @@ jobs:
       - name: Check that tag version and Cargo.toml version are the same
         shell: bash
         run: |
-          if ! grep -q "version = \"$VERSION\"" cli/Cargo.toml; then
+          if ! grep -q "version = \"$VERSION\"" Cargo.toml; then
             echo "version does not match Cargo.toml" >&2
             exit 1
           fi
@@ -209,8 +209,8 @@ jobs:
       run: |
         mkdir -p "$ARCHIVE"/{complete,doc}
         cp "$BIN" "$ARCHIVE"/
-        cp cli/README.md "$ARCHIVE"/
-        cp cli/CHANGELOG.md "$ARCHIVE"/doc/
+        cp README.md "$ARCHIVE"/
+        cp CHANGELOG.md "$ARCHIVE"/doc/
 
 #   - name: Generate man page and completions (no emulation)
 #     if: matrix.qemu == ''
