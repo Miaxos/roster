@@ -48,6 +48,8 @@ impl Handler {
         self.run_internal(ctx, Some(current_command)).await
     }
 
+    /// When we have a command and a connection, we try to handle messages from
+    /// this connection.
     #[inline]
     async fn run_internal(
         self,
