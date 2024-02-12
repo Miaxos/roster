@@ -1455,9 +1455,9 @@ dependencies = [
 
 [[package]]
 name = "redis-async"
-version = "0.16.1"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ade7331dca1833e4fba8e4ccc6f85bd9b0d1a3536025bfd9ad867cf825a075d"
+checksum = "912e988944435a3bebed1a238758ad0a0eae447046fcafcc04f86a7fddbb8a4d"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1465,6 +1465,7 @@ dependencies = [
  "futures-util",
  "log",
  "pin-project",
+ "socket2",
  "tokio",
  "tokio-util",
 ]
