@@ -62,7 +62,7 @@ criterion = { version = "0.5", features = ["async", "html_reports"] }
 pprof = { version = "0.13", features = ["flamegraph", "criterion"] }
 insta.workspace = true
 rand = "0.8"
-redis-async = "0.16"
+redis-async = "0.17"
 regex = "1"
 tokio = { version = "1.36", features = [
   "macros",
