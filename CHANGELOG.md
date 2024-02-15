@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/Miaxos/roster/compare/v0.1.3...v0.1.4) - 2024-02-15
+
+### Other
+- Merge pull request [#28](https://github.com/Miaxos/roster/pull/28) from Miaxos/renovate/redis-async-0.x
+- *(deps)* update rust crate redis-async to 0.17
+
 ## [0.1.3](https://github.com/Miaxos/roster/compare/v0.1.2...v0.1.3) - 2024-02-02
 
 ### Other
