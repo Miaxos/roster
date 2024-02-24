@@ -1,3 +1,4 @@
+#![feature(cell_update)]
 #![allow(clippy::print_literal)]
 #![feature(negative_impls)]
 mod application;

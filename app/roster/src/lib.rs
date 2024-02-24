@@ -1,4 +1,5 @@
 #![feature(negative_impls)]
+#![feature(cell_update)]
 pub mod application;
 pub mod domain;
 pub mod infrastructure;

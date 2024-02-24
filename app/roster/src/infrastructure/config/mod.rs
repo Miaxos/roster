@@ -4,6 +4,9 @@ use anyhow::Context;
 use config::Config;
 use serde::{Deserialize, Serialize};
 
+mod lan_cluster;
+pub use lan_cluster::LanClusterConfig;
+
 /// Configuration file for the application.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Cfg {
@@ -14,6 +17,9 @@ pub struct Cfg {
     /// When this limit is reached, the server will stop accepting connections
     /// until an active connection terminates.
     pub max_connection: u16,
+    /// The lan cluster describe a cluster which should only be available
+    /// "locally" with a quite fast path between each members
+    pub lan_cluster: LanClusterConfig,
 }
 
 impl Cfg {
