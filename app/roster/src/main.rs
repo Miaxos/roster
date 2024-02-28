@@ -30,6 +30,7 @@ fn main() -> anyhow::Result<()> {
     // Initialize Roster WAN clusturing
 
     // Initialize Roster LAN clusturing
+    //
 
     // Initialize server with Redis Protocol to accept connections;
     let server = ServerConfigBuilder::default()
