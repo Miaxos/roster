@@ -55,6 +55,9 @@ between our two instances, as for Redis & Dragonfly.
 
 The full list of implemented commands can be checked [here](./docs/cmd_list.md).
 
+The full differences between redis & roster can be checked
+[here](./docs/differences.md).
+
 ## Architecture
 
 ### Performance
@@ -100,6 +103,10 @@ between a fixed number of thread.
 <p align="center">
     <img src="./docs/storage.svg" width="60%" />
 </p>
+
+## Contributing
+
+Please, feel free to contribute in any way you want for now.
 
 ## References
 

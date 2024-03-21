@@ -39,17 +39,21 @@ futures-locks = "0.7"
 indexmap = "2"
 local-sync = "0.1"
 monoio = { workspace = true, features = ["bytes", "sync", "iouring"] }
+openraft = { workspace = true, features = ["serde", "monoio"] }
 rustc-hash = "1.1.0"
 scc = "2"
 sharded-thread = "1"
 serde.workspace = true
 thiserror = "1"
+url = { workspace = true, features = ["serde"] }
 rand = "0.8"
 zstd = "0.13"
 
 # Logging
 tracing = { workspace = true, features = ["attributes"] }
 tracing-subscriber = { workspace = true, features = ["registry", "env-filter", "json"] }
+
+roster-lan-protocol.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 monoio = { workspace = true, features = ["bytes", "legacy"] }

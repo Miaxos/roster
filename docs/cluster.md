@@ -15,3 +15,16 @@ implement the protocol allowing roster to be integrated inside a Redis Cluster.
 
 A Roster Cluster got his ACL globally replicated in every node through a Raft
 protocol.
+
+## LAN Clustering
+
+The idea of the LAN Clustering is a clustering based on a local proximity of
+each node. It would be better to use this LAN Clustering for nodes in the same
+AZ[^1] or even in the same datacenter. Later we could even add some rack
+awarness if needed.
+
+[^1]: Availability Zone.
+
+### Autopilot
+
+TODO
