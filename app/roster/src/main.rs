@@ -1,3 +1,4 @@
+#![feature(cell_update)]
 #![allow(clippy::print_literal)]
 #![feature(negative_impls)]
 mod application;
@@ -8,6 +9,8 @@ use std::sync::Arc;
 
 use application::server::ServerConfigBuilder;
 use infrastructure::config::Cfg;
+
+// use crate::domain::cluster::Cluster;
 // use infrastructure::instruments::Instruments;
 
 #[cfg(debug_assertions)]
@@ -27,10 +30,10 @@ fn main() -> anyhow::Result<()> {
 
     // Initialize memory storage
 
-    // Initialize Roster WAN clusturing
+    // Initialize Roster WAN clusturing (federation)
 
     // Initialize Roster LAN clusturing
-    //
+    // If no cluster, it means we run in `standalone` mode.
 
     // Initialize server with Redis Protocol to accept connections;
     let server = ServerConfigBuilder::default()

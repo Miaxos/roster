@@ -3,6 +3,7 @@ resolver = "2"
 
 members = [
   "app/roster",
+  "lib/lan_protocol",
 ]
 
 [workspace.package]
@@ -17,10 +18,15 @@ config = "0.14"
 derive_builder = "0.20"
 dotenv = "0.15"
 monoio = "0.2.2"
+openraft = { git = "https://github.com/miaxos/openraft.git", branch = "add-monoio-runtime", features = ["monoio"] }
 insta = { version = "1", features = ["yaml"] }
 serde = "1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
+url = "2.5.0"
+ulid = "1.1.2"
+
+roster-lan-protocol = { version = "0.*.*", path = "./lib/lan_protocol" }
 
 [profile.dev]
 panic = "abort"
