@@ -388,4 +388,26 @@ mod tests {
             assert!(Frame::check(&mut cur).is_ok());
         }
     }
+
+    #[test]
+    fn test_null_frame() {
+        let test_case: Vec<&[u8]> = vec![b"$-1\r\n"];
+
+        for t in test_case {
+            let b = BytesMut::from(t);
+            let mut cur = Cursor::new(&b);
+            assert!(Frame::check(&mut cur).is_ok());
+        }
+    }
+
+    #[test]
+    fn test_incomplete_frame() {
+        let test_case: Vec<&[u8]> = vec![b"*2\r\n$3\r\nGET\r\n$5\r\nhel"];
+
+        for t in test_case {
+            let b = BytesMut::from(t);
+            let mut cur = Cursor::new(&b);
+            assert!(Frame::check(&mut cur).is_err());
+        }
+    }
 }
