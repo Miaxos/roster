@@ -55,7 +55,7 @@ tracing-subscriber = { workspace = true, features = ["registry", "env-filter", "
 monoio = { workspace = true, features = ["bytes", "legacy"] }
 
 [build-dependencies]
-chrono = "0.4.34"
+chrono = "0.4.38"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["async", "html_reports"] }
