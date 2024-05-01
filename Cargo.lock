@@ -1454,9 +1454,9 @@ dependencies = [
 
 [[package]]
 name = "redis-async"
-version = "0.17.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "912e988944435a3bebed1a238758ad0a0eae447046fcafcc04f86a7fddbb8a4d"
+checksum = "48732d38d64794df698e1f6410d1650088ee9bf7cea405fbb0adb24189217a8f"
 dependencies = [
  "bytes",
  "futures-channel",
