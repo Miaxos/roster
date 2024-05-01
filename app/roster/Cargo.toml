@@ -44,7 +44,7 @@ scc = "2"
 sharded-thread = "1"
 serde.workspace = true
 thiserror = "1"
-rand = "0.8"
+rand = "0.8.5"
 zstd = "0.13"
 
 # Logging
@@ -61,7 +61,7 @@ chrono = "0.4.34"
 criterion = { version = "0.5", features = ["async", "html_reports"] }
 pprof = { version = "0.13", features = ["flamegraph", "criterion"] }
 insta.workspace = true
-rand = "0.8"
+rand = "0.8.5"
 redis-async = "0.17"
 regex = "1"
 tokio = { version = "1.36", features = [
