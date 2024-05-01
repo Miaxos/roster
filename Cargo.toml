@@ -11,7 +11,7 @@ edition = "2021"
 repository = "https://github.com/miaxos/roster/"
 
 [workspace.dependencies]
-anyhow = "1"
+anyhow = "1.0.82"
 bytes = "1"
 config = "0.14"
 derive_builder = "0.20"
