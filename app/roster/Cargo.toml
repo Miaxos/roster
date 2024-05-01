@@ -58,7 +58,7 @@ monoio = { workspace = true, features = ["bytes", "legacy"] }
 chrono = "0.4.34"
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["async", "html_reports"] }
+criterion = { version = "0.5.1", features = ["async", "html_reports"] }
 pprof = { version = "0.13", features = ["flamegraph", "criterion"] }
 insta.workspace = true
 rand = "0.8"
