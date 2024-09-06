@@ -18,7 +18,7 @@ derive_builder = "0.20"
 dotenv = "0.15"
 monoio = "0.2.2"
 insta = { version = "1", features = ["yaml"] }
-serde = "1"
+serde = "1.0.200"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
